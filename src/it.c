@@ -6,11 +6,11 @@
 
 // volatile u8 color_index = 0;
 volatile f32 brightness_phase = 0.0f;
-volatile f32 hue_phase = 0.0f;
+// volatile f32 hue_phase = 0.0f;
 const f32 PI = 3.14159265359;
 // 100*0.01=1s to do a breath
-const f32 brightness_step = PI / 50.0f;
-const f32 hue_step = 0.005f;
+const f32 brightness_step = PI / 2.0f;
+// const f32 hue_step = 0.005f;
 
 void TIM3_IRQHandler(void) {
     // check if update interrupt flag is set
@@ -20,17 +20,17 @@ void TIM3_IRQHandler(void) {
 
         // update phase
         brightness_phase += brightness_step;
-        hue_phase += hue_step;
+        // hue_phase += hue_step;
 
         // switch to next color
         if (brightness_phase > 3.5 * PI)
             brightness_phase -= 2 * PI;
-        if (hue_phase > 1.0)
-            hue_phase -= 1.0;
+        // if (hue_phase > 1.0)
+        //     hue_phase -= 1.0;
 
         u8 brightness = f32_to_u8((sinf(brightness_phase) + 1) / 2);
-        u32 color = (brightness << 24) | hue_to_rgb(hue_phase);
-
+        // u32 color = (brightness << 24) | hue_to_rgb(hue_phase);
+        u32 color = brightness > 128 ? 0xFFFFFFFF : 0x00000000;
         led_show(color);
     }
 }
