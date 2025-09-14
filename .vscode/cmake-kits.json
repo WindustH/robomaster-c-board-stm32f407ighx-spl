@@ -1,0 +1,6 @@
+[
+    {
+        "name": "ARM GCC for STM32",
+        "toolchainFile": "${workspaceFolder}/toolchain-arm-none-eabi.cmake"
+    }
+]

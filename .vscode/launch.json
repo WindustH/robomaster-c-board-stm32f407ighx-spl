@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug (OpenOCD)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/stm32f407ighx.elf",
+            "device": "STM32F407IGHx",
+            "svdFile": "${workspaceFolder}/STM32F407.svd", // Provides peripheral register info
+            "configFiles": [
+                // Tries ST-Link first, then CMSIS-DAP. Add your programmer's config file here.
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
+            "runToEntryPoint": "main", // Automatically run to the main function
+            "postLaunchCommands": [
+                "monitor reset halt"
+            ],
+            "showDevDebugOutput": "both"
+        }
+    ]
+}

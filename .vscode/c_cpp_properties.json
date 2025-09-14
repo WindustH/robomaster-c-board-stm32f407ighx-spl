@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "name": "STM32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/inc",
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/libs/CMSIS/Include",
+                "${workspaceFolder}/libs/CMSIS/Device/ST/STM32F4xx/Include",
+                "${workspaceFolder}/libs/STM32F4xx_StdPeriph_Driver/inc",
+                "${workspaceFolder}/startup"
+            ],
+            "defines": [
+                "STM32F40_41xxx",
+                "STM32F407xx",
+                "USE_STDPERIPH_DRIVER"
+            ],
+            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm"
+        }
+    ],
+    "version": 4
+}
