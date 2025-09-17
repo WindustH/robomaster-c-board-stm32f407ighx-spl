@@ -1,4 +1,5 @@
 #include "setup.h"
+#include "led.h"
 // for gpio
 #include "stm32f4xx_gpio.h"
 // for clock control
@@ -6,18 +7,15 @@
 // for timer
 #include "stm32f4xx_tim.h"
 
-void setup_system_clocks(void) {
-    // enable apb1 bus clocks for timer 5 and timer 3
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5 | RCC_APB1Periph_TIM3, ENABLE);
-
-    // enable ahb1 bus clock for gpioh
+void setup_led(void) {
+    // enable clock for timer 5 (pwm outpput)
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
+    // enable clock for gpioh
     // (pins to control led)
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOH, ENABLE);
-}
 
-void setup_gpio(void) {
+    // gpio config for led
     GPIO_InitTypeDef GPIO_InitStructure;
-
     // pin 10,11,12 of port h (gpioh)
     // (pins to control led)
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12;
@@ -32,21 +30,14 @@ void setup_gpio(void) {
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
     // apply conf to gpioh
     GPIO_Init(GPIOH, &GPIO_InitStructure);
-
     // connect timer 5 to gpioh
     GPIO_PinAFConfig(GPIOH, GPIO_PinSource10, GPIO_AF_TIM5);
     GPIO_PinAFConfig(GPIOH, GPIO_PinSource11, GPIO_AF_TIM5);
     GPIO_PinAFConfig(GPIOH, GPIO_PinSource12, GPIO_AF_TIM5);
-}
 
-void setup_timers(void) {
     // timer output compare structure (for pwm)
     TIM_OCInitTypeDef TIM_OCInitStructure;
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-
-    // config nested vector interrupt controller for timer 3 interrupts
-    NVIC_InitTypeDef NVIC_InitStructure;
-
     // config timer 5 for pwm output
     // auto-reload value
     // define the period of pwm
@@ -59,7 +50,6 @@ void setup_timers(void) {
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     // apply conf to timer 5
     TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure);
-
     // config output compare for pwm
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
@@ -67,7 +57,6 @@ void setup_timers(void) {
     TIM_OCInitStructure.TIM_Pulse = 0;
     // high <-> active
     TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-
     // apply output config for 3 channels of timer 5
     TIM_OC1Init(TIM5, &TIM_OCInitStructure);
     TIM_OC1PreloadConfig(TIM5, TIM_OCPreload_Enable);
@@ -75,11 +64,23 @@ void setup_timers(void) {
     TIM_OC2PreloadConfig(TIM5, TIM_OCPreload_Enable);
     TIM_OC3Init(TIM5, &TIM_OCInitStructure);
     TIM_OC3PreloadConfig(TIM5, TIM_OCPreload_Enable);
-
     // enable auto-reload preload for timer 5
     TIM_ARRPreloadConfig(TIM5, ENABLE);
 
+    // enable pwm outputs of timer 5 (a basic timer), for led control
+    TIM_CtrlPWMOutputs(TIM5, ENABLE);
+    TIM_Cmd(TIM5, ENABLE);
+    // set initial led state to off
+    led_show(0x00000000);
+}
+
+// use timer 3 to do cron job
+void setup_schedule(void) {
+    // enable apb1 bus clocks for timer 3
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+
     // config timer 3
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
     // prescale timer 3 to 100kHz
     TIM_TimeBaseStructure.TIM_Prescaler = 1679;
     // period 1000-1
@@ -88,9 +89,10 @@ void setup_timers(void) {
     TIM_TimeBaseStructure.TIM_ClockDivision = 0;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
-
     TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);
 
+    // config nested vector interrupt controller for timer 3 interrupts
+    NVIC_InitTypeDef NVIC_InitStructure;
     // config nvic for timer 3
     NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
@@ -102,4 +104,32 @@ void setup_timers(void) {
 
     // start timer 3
     TIM_Cmd(TIM3, ENABLE);
+}
+
+void setup_uart(void) {
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
+
+    // setup gpio
+    GPIO_InitTypeDef GPIO_InitStructure;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOG, &GPIO_InitStructure);
+
+    USART_InitTypeDef USART_InitStructure;
+    // baud rate
+    USART_InitStructure.USART_BaudRate = 9600;
+    USART_InitStructure.USART_HardwareFlowControl =
+        USART_HardwareFlowControl_None;
+    // transmit mode
+    USART_InitStructure.USART_Mode = USART_Mode_Tx;
+    // no parity
+    USART_InitStructure.USART_Parity = USART_Parity_No;
+    USART_InitStructure.USART_StopBits = USART_StopBits_1;
+    USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+    USART_Init(USART1, &USART_InitStructure);
+
+    USART_Cmd(USART1, ENABLE);
 }

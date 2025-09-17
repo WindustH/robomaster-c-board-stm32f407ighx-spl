@@ -17,9 +17,9 @@
                 "USE_STDPERIPH_DRIVER"
             ],
             "compilerPath": "/usr/bin/arm-none-eabi-gcc",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "gcc-arm"
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "linux-gcc-arm"
         }
     ],
     "version": 4
