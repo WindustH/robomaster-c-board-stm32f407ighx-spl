@@ -73,12 +73,7 @@
     "cmake.sourceDirectory": "${workspaceFolder}",
     "cmake.buildDirectory": "${workspaceFolder}/build",
     "cmake.configureOnOpen": true,
-    // --- Debugger Settings (Cortex-Debug) ---
-    // This tells the Cortex-Debug extension where to find the ARM toolchain.
-    "cortex-debug.armToolchainPath": "/usr/bin", // Adjust if your toolchain is elsewhere
-    "cortex-debug.openocdPath": "openocd", // Assumes 'openocd' is in your system's PATH
-    // --- Editor & Formatting ---
-    "editor.formatOnSave": true,
+
     "[c]": {
         "editor.defaultFormatter": "ms-vscode.cpptools"
     }

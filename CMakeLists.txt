@@ -1,5 +1,5 @@
 # CMakeLists.txt for STM32F407 Project
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 4.0)
 
 # Project information
 project(stm32f407ighx C ASM)
@@ -40,11 +40,48 @@ file(GLOB_RECURSE APP_SOURCES ${SOURCE_DIR}/*.c)
 set(DRIVER_SOURCES
     ${CMSIS_DIR}/system_stm32f4xx.c
     ${STDPERIPH_DIR}/src/misc.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_adc.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_can.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_cec.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_crc.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_cryp.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_cryp_aes.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_cryp_des.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_cryp_tdes.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_dac.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_dbgmcu.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_dcmi.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_dfsdm.c
     ${STDPERIPH_DIR}/src/stm32f4xx_dma.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_dma2d.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_dsi.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_exti.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_flash.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_flash_ramfunc.c
+    # ${STDPERIPH_DIR}/src/stm32f4xx_fmc.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_fmpi2c.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_fsmc.c
     ${STDPERIPH_DIR}/src/stm32f4xx_gpio.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_hash.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_hash_md5.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_hash_sha1.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_i2c.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_iwdg.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_lptim.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_ltdc.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_pwr.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_qspi.c
     ${STDPERIPH_DIR}/src/stm32f4xx_rcc.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_rng.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_rtc.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_sai.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_sdio.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_spdifrx.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_spi.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_syscfg.c
     ${STDPERIPH_DIR}/src/stm32f4xx_tim.c
     ${STDPERIPH_DIR}/src/stm32f4xx_usart.c
+    ${STDPERIPH_DIR}/src/stm32f4xx_wwdg.c
 )
 
 set(ASM_SOURCES
@@ -71,10 +108,6 @@ target_include_directories(${TARGET}
 # Common flags for all build types
 target_compile_options(${TARGET}
     PRIVATE
-    -mcpu=${CPU}
-    -mthumb
-    -mfpu=${FPU}
-    -mfloat-abi=${FLOAT_ABI}
     -Wall
     -ffunction-sections # Place each function in its own section
     -fdata-sections # Place each data item in its own section
@@ -105,10 +138,6 @@ target_compile_definitions(${TARGET}
 # --- Linker Options ---
 target_link_options(${TARGET}
     PRIVATE
-    -mcpu=${CPU}
-    -mthumb
-    -mfpu=${FPU}
-    -mfloat-abi=${FLOAT_ABI}
     --specs=nano.specs
     --specs=nosys.specs
     -T${LINKER_SCRIPT}
