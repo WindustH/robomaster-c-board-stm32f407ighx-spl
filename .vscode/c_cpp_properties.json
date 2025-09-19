@@ -6,9 +6,9 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/inc",
                 "${workspaceFolder}/src",
-                "${workspaceFolder}/libs/CMSIS/Include",
-                "${workspaceFolder}/libs/CMSIS/Device/ST/STM32F4xx/Include",
-                "${workspaceFolder}/libs/STM32F4xx_StdPeriph_Driver/inc",
+                "${workspaceFolder}/inc/core/CMSIS/Include",
+                "${workspaceFolder}/inc/core/CMSIS/Device/ST/STM32F4xx/Include",
+                "${workspaceFolder}/inc/core/STM32F4xx_StdPeriph_Driver/inc",
                 "${workspaceFolder}/startup"
             ],
             "defines": [

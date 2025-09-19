@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "utils/map.h"
 #include <math.h>
 
 u8 f32_to_u8(f32 x) {
@@ -10,16 +10,16 @@ u8 f32_to_u8(f32 x) {
   return (u8)lroundf(x * 255.0f);
 }
 
-u32 hue_to_rgb(f64 hue) {
+u32 hue_to_rgb(f32 hue) {
   if (hue < 0.0)
     hue = 0.0;
   if (hue >= 1.0)
     hue = 0.0;
 
-  f64 r = 0.0, g = 0.0, b = 0.0;
-  f64 scaled_hue = hue * 6.0;
+  f32 r = 0.0, g = 0.0, b = 0.0;
+  f32 scaled_hue = hue * 6.0;
   i32 sector = (i32)scaled_hue;
-  f64 fraction = scaled_hue - sector;
+  f32 fraction = scaled_hue - sector;
 
   switch (sector) {
   case 0:
