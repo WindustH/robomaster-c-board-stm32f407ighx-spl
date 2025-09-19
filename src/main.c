@@ -1,12 +1,12 @@
-#include "led.h"
 #include "setup.h"
-#include "uart.h"
+#include "uart_it.h"
 
 int main(void) {
   setup_clock();
   setup_led();
   setup_schedule();
   setup_uart();
+  setup_it_uart();
 
   //  main loop
   while (true) {

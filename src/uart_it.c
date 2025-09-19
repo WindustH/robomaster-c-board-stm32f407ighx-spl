@@ -1,4 +1,6 @@
-#include "uart.h"
+#include "uart_it.h"
+#include "stm32f4xx.h"
+
 void uart_send_byte(u8 byte) {
   USART_SendData(USART1, byte);
   while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)

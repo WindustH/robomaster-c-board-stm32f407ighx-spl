@@ -1,4 +1,4 @@
-#include "stm32f4xx.h"
+#pragma once
 #include "type.h"
 
 void uart_send_byte(const u8 byte);

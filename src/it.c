@@ -1,7 +1,6 @@
 #include "it.h"
 #include "led.h"
 #include "stm32f4xx.h"
-#include "uart.h"
 #include "utils.h"
 #include <math.h>
 
@@ -42,5 +41,11 @@ void USART1_IRQHandler(void) {
     uart_rx_data = USART_ReceiveData(USART1);
     uart_rx_flag = 1;
     USART_ClearITPendingBit(USART1, USART_IT_RXNE);
+  }
+}
+
+void DMA2_Stream7_IRQHandler(void) {
+  if (DMA_GetITStatus(DMA2_Stream7, DMA_IT_TCIF7)) {
+    DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TCIF7);
   }
 }
