@@ -1,4 +1,35 @@
 CompileFlags:
-  CompilationDatabase: build
+  Add: [-ferror-limit=0]
+
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+
+Index:
+  Background: Build
+
 InlayHints:
   Enabled: false
+
+---
+If:
+  PathMatch: [.*cmsis.*, .*CMSIS.*, .*Drivers/CMSIS.*]
+CompileFlags:
+  Remove: [-Wall, -Wextra]
+Diagnostics:
+  Suppress: "*"
+
+---
+If:
+  PathMatch:
+    [
+      .*StdPeriph.*,
+      .*stdperiph.*,
+      .*STM32F4xx_StdPeriph_Driver.*,
+      .*stm32f4xx_.*\.h,
+      .*misc\.h,
+    ]
+CompileFlags:
+  Remove: [-Wall, -Wextra]
+Diagnostics:
+  Suppress: "*"

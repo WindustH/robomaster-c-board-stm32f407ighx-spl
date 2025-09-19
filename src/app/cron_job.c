@@ -1,6 +1,6 @@
 #include "app/cron_job.h"
 #include "bsp/led.h"
-#include "stm32f4xx.h"
+#include "stm32f4xx_conf.h"
 #include "utils/map.h"
 #include <math.h>
 

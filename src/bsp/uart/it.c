@@ -1,5 +1,5 @@
 #include "bsp/uart/it.h"
-#include "stm32f4xx.h"
+#include "stm32f4xx_conf.h"
 
 void setup_it_uart() {
   // config nvic

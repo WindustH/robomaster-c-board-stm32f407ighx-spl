@@ -11,16 +11,6 @@
                 "${workspaceFolder}/inc/core/STM32F4xx_StdPeriph_Driver/inc",
                 "${workspaceFolder}/startup"
             ],
-            "defines": [
-                "STM32F40_41xxx",
-                "STM32F407xx",
-                "USE_STDPERIPH_DRIVER",
-                "HSE_VALUE=12000000",
-                "PLL_M=12",
-                "PLL_N=336",
-                "PLL_Q=7",
-                "PLL_P=2"
-            ],
             "compilerPath": "/usr/bin/arm-none-eabi-gcc",
             "cStandard": "c23",
             "cppStandard": "c++23",

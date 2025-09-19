@@ -1,5 +1,5 @@
 #include "bsp/uart.h"
-#include "stm32f4xx.h"
+#include "stm32f4xx_conf.h"
 
 void setup_uart() {
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);

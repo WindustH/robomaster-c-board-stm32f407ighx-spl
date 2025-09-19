@@ -1,5 +1,5 @@
 #include "bsp/led.h"
-#include "stm32f4xx.h"
+#include "stm32f4xx_conf.h"
 
 void setup_led() {
   // enable clock(42000000Hz) for timer 5 (pwm outpput)

@@ -1,6 +1,6 @@
+#include "bsp/clock.h"
 #include "bsp/cron.h"
 #include "bsp/led.h"
-#include "bsp/setup.h"
 #include "bsp/uart.h"
 #include "bsp/uart/it.h"
 

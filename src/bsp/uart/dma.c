@@ -1,5 +1,5 @@
 #include "bsp/uart/dma.h"
-#include "stm32f4xx.h"
+#include "stm32f4xx_conf.h"
 #include <string.h>
 
 // dma transmit buffer for uart data
@@ -102,10 +102,10 @@ void uart_process_received_data(u8 half) {
   if (half == 0) {
     // Process first half of buffer (0 to DMA_BUFFER_SIZE/2 - 1)
     start_pos = 0;
-    end_pos = DMA_BUFFER_SIZE/2;
+    end_pos = DMA_BUFFER_SIZE / 2;
   } else {
     // Process second half of buffer (DMA_BUFFER_SIZE/2 to DMA_BUFFER_SIZE - 1)
-    start_pos = DMA_BUFFER_SIZE/2;
+    start_pos = DMA_BUFFER_SIZE / 2;
     end_pos = DMA_BUFFER_SIZE;
   }
 

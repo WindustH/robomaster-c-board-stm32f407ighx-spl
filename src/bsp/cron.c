@@ -1,6 +1,6 @@
 #include "bsp/cron.h"
-#include "stm32f4xx.h"
 #include "app/cron_job.h"
+#include "stm32f4xx_conf.h"
 
 void setup_cron() {
   // enable apb1 peripherial clocks (42000000Hz) for timer 3
