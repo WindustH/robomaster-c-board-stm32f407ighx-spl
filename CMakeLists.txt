@@ -13,7 +13,7 @@ set_target_properties(${TARGET} PROPERTIES SUFFIX ".elf")
 set(CPU cortex-m4)
 set(FPU fpv4-sp-d16)
 set(FLOAT_ABI hard)
-set(MCU_DEVICE STM32F407xx) # Renamed to avoid conflict with potential CMake variables
+set(MCU_DEVICE STM32F407xx)
 
 # --- Build Configuration ---
 if(NOT CMAKE_BUILD_TYPE)
@@ -126,6 +126,7 @@ target_compile_definitions(${TARGET}
     STM32F40_41xxx
     ${MCU_DEVICE}
     USE_STDPERIPH_DRIVER
+    HSE_VALUE=12500000
 )
 
 # Build-type specific definitions

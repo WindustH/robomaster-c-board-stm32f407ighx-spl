@@ -8,8 +8,8 @@
 volatile f32 brightness_phase = 0.0f;
 volatile f32 hue_phase = 0.0f;
 const f32 PI = 3.14159265359;
-const f32 brightness_step = PI / 50.0f;
-const f32 hue_step = 0.005f;
+const f32 brightness_step = PI / 200.0f;
+const f32 hue_step = 0.001f;
 
 volatile u32 cnt_0 = 0;
 const u32 ddl_0 = 100;
@@ -26,7 +26,7 @@ void TIM3_IRQHandler(void) {
         cnt_0++;
 
         if (cnt_0 >= ddl_0) {
-            char *msg = "test\n";
+            char *msg = "hello world\n";
             uart_send_str(msg);
             cnt_0 = 0;
         }

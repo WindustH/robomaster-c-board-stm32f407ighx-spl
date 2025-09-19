@@ -6,6 +6,7 @@
 #include "stm32f4xx_rcc.h"
 // for timer
 #include "stm32f4xx_tim.h"
+#include "stm32f4xx_usart.h"
 
 void setup_led(void) {
     // enable clock for timer 5 (pwm outpput)
@@ -82,7 +83,7 @@ void setup_schedule(void) {
     // config timer 3
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
     // prescale timer 3 to 100kHz
-    TIM_TimeBaseStructure.TIM_Prescaler = 1679;
+    TIM_TimeBaseStructure.TIM_Prescaler = 420-1;
     // period 1000-1
     // 0.01 s/tick
     TIM_TimeBaseStructure.TIM_Period = 999;
