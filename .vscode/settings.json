@@ -64,17 +64,9 @@
         "typeinfo": "cpp",
         "variant": "cpp"
     },
-    // --- C/C++ IntelliSense Settings ---
-    // The CMake Tools extension will provide the IntelliSense configuration.
-    // This setting tells the C/C++ extension to use it.
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    // Add compiler arguments for IntelliSense to suppress specific warnings
-    // --- CMake Tools Configuration ---
-    "cmake.sourceDirectory": "${workspaceFolder}",
-    "cmake.buildDirectory": "${workspaceFolder}/build",
-    "cmake.configureOnOpen": true,
-
     "[c]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools"
-    }
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    },
+    "editor.formatOnSave": true
 }

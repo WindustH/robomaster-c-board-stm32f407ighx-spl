@@ -121,12 +121,18 @@ target_compile_options(${TARGET}
 )
 
 # Common definitions for all build types
+# SYSCLK=12/12*336/2=168Mhz
+# USB=SYSCLK/7=48Mhz
 target_compile_definitions(${TARGET}
     PRIVATE
     STM32F40_41xxx
     ${MCU_DEVICE}
     USE_STDPERIPH_DRIVER
-    HSE_VALUE=12500000
+    HSE_VALUE=12000000
+    PLL_M=12
+    PLL_N=336
+    PLL_P=2
+    PLL_Q=7
 )
 
 # Build-type specific definitions

@@ -3,4 +3,5 @@
 
 void uart_send_byte(const u8 byte);
 void uart_send_str(const char *str);
-void test(void);
+u8 uart_received_byte(void);
+u8 uart_read_byte(void);
