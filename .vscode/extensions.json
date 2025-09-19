@@ -2,6 +2,5 @@
     "recommendations": [
         "ms-vscode.cpptools", // C/C++ IntelliSense, debugging, and code browsing
         "ms-vscode.cmake-tools", // CMake language support and build integration
-        "marus25.cortex-debug", // Advanced debugging for ARM Cortex-M microcontrollers
     ]
 }

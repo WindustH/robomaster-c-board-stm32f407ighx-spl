@@ -14,12 +14,13 @@
             "defines": [
                 "STM32F40_41xxx",
                 "STM32F407xx",
-                "USE_STDPERIPH_DRIVER"
+                "USE_STDPERIPH_DRIVER",
+                "HSE_VALUE=12500000"
             ],
             "compilerPath": "/usr/bin/arm-none-eabi-gcc",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "gcc-arm"
+            "cStandard": "c23",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "linux-gcc-arm"
         }
     ],
     "version": 4
