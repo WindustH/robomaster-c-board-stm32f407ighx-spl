@@ -19,7 +19,7 @@ void uart_send_byte(u8 byte) {
     ;
 }
 void uart_send_str(const char *str) {
-  u8 i;
+  u16 i;
   for (i = 0; str[i] != '\0'; i++)
     uart_send_byte(str[i]);
 }

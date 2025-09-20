@@ -8,7 +8,7 @@ static volatile u8 dma_tx_buffer[DMA_BUFFER_SIZE];
 static volatile u8 dma_rx_buffer[DMA_BUFFER_SIZE];
 // dma transmit buffer for echo
 static volatile u8 dma_echo_tx_buffer[DMA_BUFFER_SIZE];
-static volatile bool tx_in_progress = false;
+static volatile u8 tx_in_progress = 0;
 
 // init dma for uart
 // config both tx and rx streams with appropriate settings
@@ -84,15 +84,21 @@ void setup_dma_uart() {
   NVIC_Init(&NVIC_InitStructure);
 }
 
-void uart_send_data(u8 *data, u16 length) {
-  if (tx_in_progress) {
-    return;
-  }
-  tx_in_progress = true;
+void uart_send_data(const u8 *data, const u16 length) {
+  while (tx_in_progress)
+    ;
+  tx_in_progress = 1;
   memcpy((void *)dma_tx_buffer, data, length);
   DMA_Cmd(DMA2_Stream7, DISABLE);
   DMA_SetCurrDataCounter(DMA2_Stream7, length);
   DMA_Cmd(DMA2_Stream7, ENABLE);
+}
+
+void uart_send_str_dma(const char *str) {
+  u16 i;
+  for (i = 0; str[i] != '\0'; i++)
+    ;
+  uart_send_data((u8 *)str, i);
 }
 
 void uart_process_received_data() {
@@ -116,6 +122,7 @@ void uart_process_received_data() {
     }
     last_read_pos = current_pos;
     if (len > 0) {
+      uart_send_str_dma("\nsend back:\n\t");
       uart_send_data((u8 *)dma_echo_tx_buffer, len);
     }
   }
@@ -128,7 +135,7 @@ void DMA2_Stream7_IRQHandler() {
   if (DMA_GetITStatus(DMA2_Stream7, DMA_IT_TCIF7)) {
     // clear the transfer complete interrupt flag
     DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TCIF7);
-    tx_in_progress = false;
+    tx_in_progress = 0;
   }
 }
 
