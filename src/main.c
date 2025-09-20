@@ -2,7 +2,7 @@
 #include "bsp/cron.h"
 #include "bsp/led.h"
 #include "bsp/uart.h"
-#include "bsp/uart/it.h"
+#include "bsp/uart/dma.h"
 
 int main() {
   setup_clock();
@@ -10,12 +10,9 @@ int main() {
   setup_cron();
 
   setup_uart();
-  setup_it_uart();
-
+  setup_dma_uart();
   //  main loop
   while (true) {
-    if (uart_received_byte()) {
-      uart_send_str("see you!\n");
-    }
+    uart_process_received_data();
   }
 }

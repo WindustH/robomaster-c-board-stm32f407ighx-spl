@@ -33,3 +33,8 @@ CompileFlags:
   Remove: [-Wall, -Wextra]
 Diagnostics:
   Suppress: "*"
+---
+If:
+  PathMatch: [.*dbg.*, .*DBGMCU.*]
+Diagnostics:
+  Suppress: "*"

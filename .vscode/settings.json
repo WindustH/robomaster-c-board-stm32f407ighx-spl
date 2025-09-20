@@ -17,5 +17,15 @@
     "[c]": {
         "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
     },
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "VsCodeTaskButtons.tasks": [
+        {
+            "label": "$(play) build",
+            "task": "build",
+        },
+        {
+            "label": "$(arrow-down) flash",
+            "task": "flash",
+        }
+    ]
 }

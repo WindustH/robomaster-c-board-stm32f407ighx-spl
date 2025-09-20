@@ -6,6 +6,9 @@
 static volatile u8 dma_tx_buffer[DMA_BUFFER_SIZE];
 // dma receive buffer for uart data
 static volatile u8 dma_rx_buffer[DMA_BUFFER_SIZE];
+// dma transmit buffer for echo
+static volatile u8 dma_echo_tx_buffer[DMA_BUFFER_SIZE];
+static volatile bool tx_in_progress = false;
 
 // init dma for uart
 // config both tx and rx streams with appropriate settings
@@ -73,7 +76,7 @@ void setup_dma_uart() {
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
 
-  // configure nvic for rx dma interrupt
+  // config nvic for rx dma interrupt
   NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream2_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
@@ -82,46 +85,38 @@ void setup_dma_uart() {
 }
 
 void uart_send_data(u8 *data, u16 length) {
-  while (DMA_GetFlagStatus(DMA2_Stream7, DMA_FLAG_TCIF7) == RESET)
-    ;
-  DMA_ClearFlag(DMA2_Stream7, DMA_FLAG_TCIF7);
+  if (tx_in_progress) {
+    return;
+  }
+  tx_in_progress = true;
+  memcpy((void *)dma_tx_buffer, data, length);
   DMA_Cmd(DMA2_Stream7, DISABLE);
   DMA_SetCurrDataCounter(DMA2_Stream7, length);
-  DMA2_Stream7->M0AR = (u32)data;
   DMA_Cmd(DMA2_Stream7, ENABLE);
 }
 
-void execute_command(const char *command) {}
-
-void uart_process_received_data(u8 half) {
-  static char cmd_buffer[MAX_CMD_LENGTH];
-  static u8 cmd_idx = 0;
-
-  u16 start_pos, end_pos;
-
-  if (half == 0) {
-    // Process first half of buffer (0 to DMA_BUFFER_SIZE/2 - 1)
-    start_pos = 0;
-    end_pos = DMA_BUFFER_SIZE / 2;
-  } else {
-    // Process second half of buffer (DMA_BUFFER_SIZE/2 to DMA_BUFFER_SIZE - 1)
-    start_pos = DMA_BUFFER_SIZE / 2;
-    end_pos = DMA_BUFFER_SIZE;
-  }
-
-  for (u16 i = start_pos; i < end_pos; i++) {
-    u8 received_byte = dma_rx_buffer[i];
-
-    uart_send_data(&received_byte, 1);
-
-    if (received_byte == '\n' || received_byte == '\r') {
-      if (cmd_idx > 0) {
-        cmd_buffer[cmd_idx] = '\0';
-        execute_command(cmd_buffer);
-        cmd_idx = 0;
+void uart_process_received_data() {
+  static u16 last_read_pos = 0;
+  u16 current_pos = DMA_BUFFER_SIZE - DMA_GetCurrDataCounter(DMA2_Stream2);
+  if (current_pos != last_read_pos) {
+    u16 len = 0;
+    if (current_pos > last_read_pos) {
+      len = current_pos - last_read_pos;
+      memcpy((void *)&dma_echo_tx_buffer[0],
+             (void *)&dma_rx_buffer[last_read_pos], len);
+    } else {
+      len = DMA_BUFFER_SIZE - last_read_pos;
+      memcpy((void *)&dma_echo_tx_buffer[0],
+             (void *)&dma_rx_buffer[last_read_pos], len);
+      if (current_pos > 0) {
+        memcpy((void *)&dma_echo_tx_buffer[len], (void *)&dma_rx_buffer[0],
+               current_pos);
+        len += current_pos;
       }
-    } else if (cmd_idx < MAX_CMD_LENGTH - 1) {
-      cmd_buffer[cmd_idx++] = received_byte;
+    }
+    last_read_pos = current_pos;
+    if (len > 0) {
+      uart_send_data((u8 *)dma_echo_tx_buffer, len);
     }
   }
 }
@@ -133,27 +128,20 @@ void DMA2_Stream7_IRQHandler() {
   if (DMA_GetITStatus(DMA2_Stream7, DMA_IT_TCIF7)) {
     // clear the transfer complete interrupt flag
     DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TCIF7);
+    tx_in_progress = false;
   }
 }
 
 // dma receive stream interrupt handler
 // handles both half transfer and transfer complete interrupts for uart rx
 void DMA2_Stream2_IRQHandler() {
-  // check for half transfer interrupt
   if (DMA_GetITStatus(DMA2_Stream2, DMA_IT_HTIF2)) {
-    // clear the half transfer interrupt flag
     DMA_ClearITPendingBit(DMA2_Stream2, DMA_IT_HTIF2);
-
-    // process the first half of the buffer
-    uart_process_received_data(0);
+    uart_process_received_data();
   }
 
-  // check for transfer complete interrupt
   if (DMA_GetITStatus(DMA2_Stream2, DMA_IT_TCIF2)) {
-    // clear the transfer complete interrupt flag
     DMA_ClearITPendingBit(DMA2_Stream2, DMA_IT_TCIF2);
-
-    // process the second half of the buffer
-    uart_process_received_data(1);
+    uart_process_received_data();
   }
 }
