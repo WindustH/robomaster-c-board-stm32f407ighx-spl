@@ -1,18 +1,14 @@
-#include "bsp/clock.h"
-#include "bsp/cron.h"
-#include "bsp/led.h"
-#include "bsp/uart.h"
-#include "bsp/uart/dma.h"
+#include "bsp.h"
 
 int main() {
-  setup_clock();
-  setup_led();
+  bsp.clock.setup();
+  bsp.led.setup();
+  bsp.uart.setup();
+  bsp.uart.dma.setup();
   setup_cron();
 
-  setup_uart();
-  setup_dma_uart();
   //  main loop
   while (true) {
-    uart_process_received_data();
+    bsp.uart.dma.proc_rx_dat();
   }
 }

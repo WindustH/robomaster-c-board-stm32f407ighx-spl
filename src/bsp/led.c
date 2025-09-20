@@ -1,7 +1,7 @@
-#include "bsp/led.h"
+#include "bsp.h"
 #include "stm32f4xx_conf.h"
 
-void setup_led() {
+static void setup_impl() {
   // enable clock(42000000Hz) for timer 5 (pwm outpput)
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
   // enable clock for gpioh
@@ -65,10 +65,10 @@ void setup_led() {
   TIM_CtrlPWMOutputs(TIM5, ENABLE);
   TIM_Cmd(TIM5, ENABLE);
   // set initial led state to off
-  led_show(0x00000000);
+  bsp.led.show(0x00000000);
 }
 
-void led_show(u32 argb) {
+static void show_impl(const u32 argb) {
   u32 alpha;
   u32 red, green, blue;
 
@@ -87,3 +87,5 @@ void led_show(u32 argb) {
   TIM_SetCompare2(TIM5, green);
   TIM_SetCompare3(TIM5, red);
 }
+
+const _LedMod _led = {.setup = setup_impl, .show = show_impl};

@@ -1,7 +1,7 @@
-#include "bsp/uart.h"
+#include "bsp.h"
 #include "stm32f4xx_conf.h"
 
-void setup_uart() {
+static void setup_impl() {
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
@@ -37,3 +37,9 @@ void setup_uart() {
   USART_Init(USART1, &USART_InitStructure);
   USART_Cmd(USART1, ENABLE);
 }
+
+const _UartMod _uart = {
+    .setup = setup_impl,
+    .dma = _uart_dma,
+    .it = _uart_it,
+};

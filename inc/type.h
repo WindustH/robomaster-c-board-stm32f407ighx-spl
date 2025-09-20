@@ -10,3 +10,8 @@ typedef uint16_t u16;
 typedef int32_t i32;
 typedef int8_t i8;
 typedef int16_t i16;
+
+typedef struct {
+  u8 *dat;
+  u16 len;
+} buf;

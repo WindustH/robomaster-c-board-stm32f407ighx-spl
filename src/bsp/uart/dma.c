@@ -1,4 +1,5 @@
 #include "bsp/uart/dma.h"
+#include "bsp.h"
 #include "stm32f4xx_conf.h"
 #include <string.h>
 
@@ -9,10 +10,11 @@ static volatile u8 dma_rx_buffer[DMA_BUFFER_SIZE];
 // dma transmit buffer for echo
 static volatile u8 dma_echo_tx_buffer[DMA_BUFFER_SIZE];
 static volatile u8 tx_in_progress = 0;
+static u16 echo_buffer_index = 0;
 
 // init dma for uart
 // config both tx and rx streams with appropriate settings
-void setup_dma_uart() {
+static void setup_dma() {
   DMA_InitTypeDef DMA_InitStructure;
 
   // enable dma2 clock
@@ -84,7 +86,7 @@ void setup_dma_uart() {
   NVIC_Init(&NVIC_InitStructure);
 }
 
-void uart_send_data(const u8 *data, const u16 length) {
+static void send_dat_impl(const u8 *data, const u16 length) {
   while (tx_in_progress)
     ;
   tx_in_progress = 1;
@@ -94,36 +96,36 @@ void uart_send_data(const u8 *data, const u16 length) {
   DMA_Cmd(DMA2_Stream7, ENABLE);
 }
 
-void uart_send_str_dma(const char *str) {
+static void send_str_impl(const char *str) {
   u16 i;
   for (i = 0; str[i] != '\0'; i++)
     ;
-  uart_send_data((u8 *)str, i);
+  send_dat_impl((u8 *)str, i);
 }
 
-void uart_process_received_data() {
+static void proc_rx_dat_impl() {
   static u16 last_read_pos = 0;
   u16 current_pos = DMA_BUFFER_SIZE - DMA_GetCurrDataCounter(DMA2_Stream2);
+
   if (current_pos != last_read_pos) {
-    u16 len = 0;
-    if (current_pos > last_read_pos) {
-      len = current_pos - last_read_pos;
-      memcpy((void *)&dma_echo_tx_buffer[0],
-             (void *)&dma_rx_buffer[last_read_pos], len);
-    } else {
-      len = DMA_BUFFER_SIZE - last_read_pos;
-      memcpy((void *)&dma_echo_tx_buffer[0],
-             (void *)&dma_rx_buffer[last_read_pos], len);
-      if (current_pos > 0) {
-        memcpy((void *)&dma_echo_tx_buffer[len], (void *)&dma_rx_buffer[0],
-               current_pos);
-        len += current_pos;
+    // Process new data byte by byte
+    while (last_read_pos != current_pos) {
+      u8 byte = dma_rx_buffer[last_read_pos];
+
+      if (echo_buffer_index < DMA_BUFFER_SIZE) {
+        dma_echo_tx_buffer[echo_buffer_index++] = byte;
       }
-    }
-    last_read_pos = current_pos;
-    if (len > 0) {
-      uart_send_str_dma("\nsend back:\n\t");
-      uart_send_data((u8 *)dma_echo_tx_buffer, len);
+
+      if (byte == ' ' || echo_buffer_index >= DMA_BUFFER_SIZE) {
+        _uart_dma.send_str("\nsend back:\n  ");
+        _uart_dma.send_dat((u8 *)dma_echo_tx_buffer, echo_buffer_index);
+        echo_buffer_index = 0; // Reset for next message
+      }
+
+      last_read_pos++;
+      if (last_read_pos >= DMA_BUFFER_SIZE) {
+        last_read_pos = 0;
+      }
     }
   }
 }
@@ -144,11 +146,16 @@ void DMA2_Stream7_IRQHandler() {
 void DMA2_Stream2_IRQHandler() {
   if (DMA_GetITStatus(DMA2_Stream2, DMA_IT_HTIF2)) {
     DMA_ClearITPendingBit(DMA2_Stream2, DMA_IT_HTIF2);
-    uart_process_received_data();
+    _uart_dma.proc_rx_dat();
   }
 
   if (DMA_GetITStatus(DMA2_Stream2, DMA_IT_TCIF2)) {
     DMA_ClearITPendingBit(DMA2_Stream2, DMA_IT_TCIF2);
-    uart_process_received_data();
+    _uart_dma.proc_rx_dat();
   }
 }
+
+const _UartDmaMod _uart_dma = {.send_dat = send_dat_impl,
+                               .send_str = send_str_impl,
+                               .setup = setup_dma,
+                               .proc_rx_dat = proc_rx_dat_impl};

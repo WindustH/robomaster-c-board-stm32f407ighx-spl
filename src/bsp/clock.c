@@ -1,8 +1,7 @@
-#include "bsp/clock.h"
+#include "bsp.h"
 #include "stm32f4xx_conf.h"
 
-void setup_clock() {
-#include "stm32f4xx_rcc.h"
+void setup_impl() {
 
   // enable hse (high speed external) oscillator
   RCC_HSEConfig(RCC_HSE_ON);
@@ -39,3 +38,7 @@ void setup_clock() {
   while (RCC_GetSYSCLKSource() != 0x08)
     ;
 }
+
+const _ClockMod _clock = {
+    .setup = setup_impl,
+};
