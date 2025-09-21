@@ -1,12 +1,11 @@
-
 #pragma once
 #include "type.h"
 
 typedef struct {
-  void (*setup)();
+  void (*setup)(volatile buf *const _app_rx_buf);
   void (*send_dat)(const u8 *data, const u16 length);
   void (*send_str)(const char *str);
-  void (*proc_rx_dat)();
+  void (*rxbuf_daemon)();
 } _UartDmaMod;
 extern const _UartDmaMod _uart_dma;
 
@@ -25,7 +24,7 @@ typedef struct {
   _UartItMod it;
 } _UartMod;
 extern _UartMod _uart;
-void init_uart_mod(void);
+void setup_uart_mod(void);
 
 typedef struct {
   void (*setup)();
@@ -40,10 +39,13 @@ extern const _ClockMod _clock;
 
 typedef struct {
   void (*setup)();
+  u8 (*add_job)(const proc p);
+  void (*remove_job)(const u8 idx);
 } _CronMod;
 extern const _CronMod _cron;
 
 typedef struct {
+  void (*setup)();
   _UartMod uart;
   _LedMod led;
   _ClockMod clock;
@@ -51,4 +53,3 @@ typedef struct {
 } _BspMod;
 
 extern _BspMod bsp;
-void init_bsp_mod(void);

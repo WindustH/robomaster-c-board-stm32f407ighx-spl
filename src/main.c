@@ -1,20 +1,23 @@
+#include "app.h"
+#include "app/cron_job.h"
 #include "bsp.h"
-
-void init_uart_mod(void);
-void init_bsp_mod(void);
+static volatile buf uart_rx_buf;
 
 int main() {
-  init_uart_mod();
-  init_bsp_mod();
-
+  bsp.setup();
   bsp.clock.setup();
   bsp.led.setup();
   bsp.uart.setup();
-  bsp.uart.dma.setup();
+  bsp.uart.dma.setup(&uart_rx_buf);
   bsp.cron.setup();
+  bsp.cron.add_job(light_breathe);
+
+  app.setup();
+  app.sendback.bind_buf(&uart_rx_buf);
 
   //  main loop
   while (true) {
-    bsp.uart.dma.proc_rx_dat();
+    bsp.uart.dma.rxbuf_daemon();
+    app.sendback.daemon();
   }
 }

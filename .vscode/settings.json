@@ -13,7 +13,9 @@
         "dev.py": true,
         "startup": true,
         "startup_mdkarm": true,
-        "keil_convertor": true
+        "keil_convertor": true,
+        "core": true,
+        "lib": true
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "[c]": {

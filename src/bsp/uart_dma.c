@@ -4,17 +4,19 @@
 #include <string.h>
 
 // dma transmit buffer for uart data
-static volatile u8 dma_tx_buffer[DMA_BUFFER_SIZE];
+static volatile u8 dma_tx_buf[DMA_BUFFER_SIZE];
 // dma receive buffer for uart data
-static volatile u8 dma_rx_buffer[DMA_BUFFER_SIZE];
+static volatile u8 dma_rx_buf[DMA_BUFFER_SIZE];
 // dma transmit buffer for echo
-static volatile u8 dma_echo_tx_buffer[DMA_BUFFER_SIZE];
+static volatile buf *app_rx_buf;
 static volatile u8 tx_in_progress = 0;
-static u16 echo_buffer_index = 0;
 
 // init dma for uart
 // config both tx and rx streams with appropriate settings
-static void setup_dma() {
+static void setup_impl(volatile buf *const _app_rx_buf) {
+  app_rx_buf = _app_rx_buf;
+  app_rx_buf->len = 0;
+
   DMA_InitTypeDef DMA_InitStructure;
 
   // enable dma2 clock
@@ -24,7 +26,7 @@ static void setup_dma() {
   DMA_DeInit(DMA2_Stream7);
   DMA_InitStructure.DMA_Channel = DMA_Channel_4;
   DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&USART1->DR;
-  DMA_InitStructure.DMA_Memory0BaseAddr = (u32)dma_tx_buffer;
+  DMA_InitStructure.DMA_Memory0BaseAddr = (u32)dma_tx_buf;
   DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
   DMA_InitStructure.DMA_BufferSize = DMA_BUFFER_SIZE;
   DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
@@ -44,7 +46,7 @@ static void setup_dma() {
   DMA_DeInit(DMA2_Stream2);
   DMA_InitStructure.DMA_Channel = DMA_Channel_4;
   DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&USART1->DR;
-  DMA_InitStructure.DMA_Memory0BaseAddr = (u32)dma_rx_buffer;
+  DMA_InitStructure.DMA_Memory0BaseAddr = (u32)dma_rx_buf;
   DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
   DMA_InitStructure.DMA_BufferSize = DMA_BUFFER_SIZE;
   DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
@@ -59,8 +61,8 @@ static void setup_dma() {
   USART_DMACmd(USART1, USART_DMAReq_Rx, ENABLE);
 
   // initialize buffers to zero
-  memset((void *)dma_tx_buffer, 0, DMA_BUFFER_SIZE);
-  memset((void *)dma_rx_buffer, 0, DMA_BUFFER_SIZE);
+  memset((void *)dma_tx_buf, 0, DMA_BUFFER_SIZE);
+  memset((void *)dma_rx_buf, 0, DMA_BUFFER_SIZE);
 
   NVIC_InitTypeDef NVIC_InitStructure;
 
@@ -90,7 +92,7 @@ static void send_dat_impl(const u8 *data, const u16 length) {
   while (tx_in_progress)
     ;
   tx_in_progress = 1;
-  memcpy((void *)dma_tx_buffer, data, length);
+  memcpy((void *)dma_tx_buf, data, length);
   DMA_Cmd(DMA2_Stream7, DISABLE);
   DMA_SetCurrDataCounter(DMA2_Stream7, length);
   DMA_Cmd(DMA2_Stream7, ENABLE);
@@ -103,30 +105,20 @@ static void send_str_impl(const char *str) {
   send_dat_impl((u8 *)str, i);
 }
 
-static void proc_rx_dat_impl() {
+static void save_rx_dat_impl() {
   static u16 last_read_pos = 0;
   u16 current_pos = DMA_BUFFER_SIZE - DMA_GetCurrDataCounter(DMA2_Stream2);
 
   if (current_pos != last_read_pos) {
-    // Process new data byte by byte
-    while (last_read_pos != current_pos) {
-      u8 byte = dma_rx_buffer[last_read_pos];
+    u16 bytes_to_copy = current_pos - last_read_pos;
 
-      if (echo_buffer_index < DMA_BUFFER_SIZE) {
-        dma_echo_tx_buffer[echo_buffer_index++] = byte;
-      }
+    // With ht and tc interrupts, current_pos is always > last_read_pos
+    // no dma buffer wrap-around to handle
+    memcpy((void *)&app_rx_buf->dat[app_rx_buf->len],
+           (void *)&dma_rx_buf[last_read_pos], bytes_to_copy);
+    app_rx_buf->len = (app_rx_buf->len + bytes_to_copy) % DMA_BUFFER_SIZE;
 
-      if (byte == ' ' || echo_buffer_index >= DMA_BUFFER_SIZE) {
-        _uart_dma.send_str("\nsend back:\n  ");
-        _uart_dma.send_dat((u8 *)dma_echo_tx_buffer, echo_buffer_index);
-        echo_buffer_index = 0; // Reset for next message
-      }
-
-      last_read_pos++;
-      if (last_read_pos >= DMA_BUFFER_SIZE) {
-        last_read_pos = 0;
-      }
-    }
+    last_read_pos = current_pos;
   }
 }
 
@@ -146,16 +138,16 @@ void DMA2_Stream7_IRQHandler() {
 void DMA2_Stream2_IRQHandler() {
   if (DMA_GetITStatus(DMA2_Stream2, DMA_IT_HTIF2)) {
     DMA_ClearITPendingBit(DMA2_Stream2, DMA_IT_HTIF2);
-    _uart_dma.proc_rx_dat();
+    bsp.uart.dma.rxbuf_daemon();
   }
 
   if (DMA_GetITStatus(DMA2_Stream2, DMA_IT_TCIF2)) {
     DMA_ClearITPendingBit(DMA2_Stream2, DMA_IT_TCIF2);
-    _uart_dma.proc_rx_dat();
+    bsp.uart.dma.rxbuf_daemon();
   }
 }
 
 const _UartDmaMod _uart_dma = {.send_dat = send_dat_impl,
                                .send_str = send_str_impl,
-                               .setup = setup_dma,
-                               .proc_rx_dat = proc_rx_dat_impl};
+                               .setup = setup_impl,
+                               .rxbuf_daemon = save_rx_dat_impl};

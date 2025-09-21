@@ -1,13 +1,17 @@
 #include "app/cron_job.h"
 #include "bsp.h"
 #include "stm32f4xx_conf.h"
+#include "type.h"
 #include "utils/map.h"
 #include <math.h>
 
 void light_breathe() {
-  const f32 PI = 3.14159265359;
-  const f32 brightness_step = PI / 200.0f;
-  const f32 hue_step = 0.001f;
+  const f32 second_per_brightness_phase = 2.0f;
+  const f32 second_per_hue_phase = 11.37f;
+
+  const f32 brightness_step =
+      2 * PI / second_per_brightness_phase * SECOND_PER_TICK;
+  const f32 hue_step = 1.0f / second_per_hue_phase * SECOND_PER_TICK;
 
   static f32 brightness_phase = 0.0f;
   static f32 hue_phase = 0.0f;

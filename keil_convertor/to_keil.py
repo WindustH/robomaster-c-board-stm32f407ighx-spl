@@ -211,7 +211,15 @@ def main():
         for file_path in sorted(files_in_group):
             _, ext = os.path.splitext(file_path)
             file_elem = ET.SubElement(files_elem, "File")
-            ET.SubElement(file_elem, "FileName").text = os.path.basename(file_path)
+            # Extract just the filename part for FileName element
+            # Handle both Windows and Linux path separators
+            if "\\" in file_path:
+                basename = file_path.split("\\")[-1]
+            else:
+                basename = os.path.basename(file_path)
+            # Debug: Print the file_path and basename to see what's happening
+            # print(f"DEBUG: file_path: '{file_path}', basename: '{basename}'")
+            ET.SubElement(file_elem, "FileName").text = basename
             ET.SubElement(file_elem, "FileType").text = get_file_type(ext)
             ET.SubElement(file_elem, "FilePath").text = file_path
 

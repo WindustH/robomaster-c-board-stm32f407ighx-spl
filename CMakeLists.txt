@@ -24,7 +24,7 @@ endif()
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/STM32F407IGHX_FLASH.ld)
 
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
-set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/src)
+set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/lib)
 set(DRIVER_DIR ${CMAKE_SOURCE_DIR}/core)
 set(CMSIS_DIR ${DRIVER_DIR}/CMSIS)
 set(STDPERIPH_DIR ${DRIVER_DIR}/STM32F4xx_StdPeriph_Driver)
@@ -99,6 +99,7 @@ target_sources(${TARGET}
 # include directories
 target_include_directories(${TARGET}
     PUBLIC
+    ${SOURCE_DIR}
     ${INCLUDE_DIR}
     ${CMSIS_DIR}/Include
     ${CMSIS_DIR}/Device/ST/STM32F4xx/Include
