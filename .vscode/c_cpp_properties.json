@@ -4,11 +4,10 @@
             "name": "STM32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/inc",
                 "${workspaceFolder}/src",
-                "${workspaceFolder}/inc/core/CMSIS/Include",
-                "${workspaceFolder}/inc/core/CMSIS/Device/ST/STM32F4xx/Include",
-                "${workspaceFolder}/inc/core/STM32F4xx_StdPeriph_Driver/inc",
+                "${workspaceFolder}/core/CMSIS/Include",
+                "${workspaceFolder}/core/CMSIS/Device/ST/STM32F4xx/Include",
+                "${workspaceFolder}/core/STM32F4xx_StdPeriph_Driver/inc",
                 "${workspaceFolder}/startup"
             ],
             "compilerPath": "/usr/bin/arm-none-eabi-gcc",

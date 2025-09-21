@@ -1,5 +1,5 @@
 #include "app/cron_job.h"
-#include "bsp/led.h"
+#include "bsp.h"
 #include "stm32f4xx_conf.h"
 #include "utils/map.h"
 #include <math.h>
@@ -27,5 +27,5 @@ void light_breathe() {
   u8 brightness = f32_to_u8((sinf(brightness_phase) + 1) / 2);
   u32 color = (brightness << 24) | hue_to_rgb(hue_phase);
 
-  led_show(color);
+  bsp.led.show(color);
 }

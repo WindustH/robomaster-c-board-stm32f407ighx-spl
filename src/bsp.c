@@ -1,6 +1,9 @@
 #include "bsp.h"
-const _BspMod bsp = {
-    .uart = _uart,
-    .led = _led,
-    .clock = _clock,
-};
+_BspMod bsp;
+
+void init_bsp_mod() {
+  bsp.uart = _uart;
+  bsp.led = _led;
+  bsp.clock = _clock;
+  bsp.cron = _cron;
+}

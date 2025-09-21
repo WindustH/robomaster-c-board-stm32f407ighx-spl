@@ -1,4 +1,4 @@
-#include "bsp/uart/it.h"
+#include "bsp/uart_it.h"
 #include "bsp.h"
 #include "stm32f4xx_conf.h"
 

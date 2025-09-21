@@ -24,7 +24,8 @@ typedef struct {
   _UartDmaMod dma;
   _UartItMod it;
 } _UartMod;
-extern const _UartMod _uart;
+extern _UartMod _uart;
+void init_uart_mod(void);
 
 typedef struct {
   void (*setup)();
@@ -38,9 +39,16 @@ typedef struct {
 extern const _ClockMod _clock;
 
 typedef struct {
+  void (*setup)();
+} _CronMod;
+extern const _CronMod _cron;
+
+typedef struct {
   _UartMod uart;
   _LedMod led;
   _ClockMod clock;
+  _CronMod cron;
 } _BspMod;
 
-extern const _BspMod bsp;
+extern _BspMod bsp;
+void init_bsp_mod(void);

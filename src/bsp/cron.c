@@ -1,8 +1,9 @@
 #include "bsp/cron.h"
 #include "app/cron_job.h"
+#include "bsp.h"
 #include "stm32f4xx_conf.h"
 
-void setup_cron() {
+static void setup_impl() {
   // enable apb1 peripherial clocks (42000000Hz) for timer 3
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 
@@ -32,6 +33,10 @@ void setup_cron() {
   // start timer 3
   TIM_Cmd(TIM3, ENABLE);
 }
+
+const _CronMod _cron = {
+    .setup = setup_impl,
+};
 
 void TIM3_IRQHandler() {
   // check if update interrupt flag is set

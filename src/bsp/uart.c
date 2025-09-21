@@ -38,8 +38,11 @@ static void setup_impl() {
   USART_Cmd(USART1, ENABLE);
 }
 
-const _UartMod _uart = {
+_UartMod _uart = {
     .setup = setup_impl,
-    .dma = _uart_dma,
-    .it = _uart_it,
 };
+
+void init_uart_mod() {
+    _uart.dma = _uart_dma;
+    _uart.it = _uart_it;
+}
