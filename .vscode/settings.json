@@ -9,9 +9,11 @@
         "toolchain-arm-none-eabi.cmake": true,
         ".clangd": true,
         ".gitignore": true,
-        "CMakeLists.txt": true,
+        // "CMakeLists.txt": true,
         "dev.py": true,
-        "startup": true
+        "startup": true,
+        "startup_mdkarm": true,
+        "keil_convertor": true
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "[c]": {

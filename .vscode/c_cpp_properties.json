@@ -3,7 +3,6 @@
         {
             "name": "STM32",
             "includePath": [
-                "${workspaceFolder}/**",
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/core/CMSIS/Include",
                 "${workspaceFolder}/core/CMSIS/Device/ST/STM32F4xx/Include",
