@@ -27,7 +27,8 @@ static void handle_cmd_daemon() {
   if (current_pos != pos) {
     while (pos != current_pos) {
       // Add bounds checking for array access
-      if (pos < DMA_BUFFER_SIZE && modu_distance(last_send_pos, pos, DMA_BUFFER_SIZE) == 3) {
+      if (pos < DMA_BUFFER_SIZE &&
+          modu_distance(last_send_pos, pos, DMA_BUFFER_SIZE) == 3) {
         u8 offset = 16;
         u32 color = 0;
         while (last_send_pos != pos) {
@@ -40,6 +41,8 @@ static void handle_cmd_daemon() {
           if (last_send_pos >= DMA_BUFFER_SIZE)
             last_send_pos = 0;
         }
+        color |= 0xff000000;
+        bsp.uart.dma.send_dat((u8 *)&color, 4);
         bsp.led.show(color);
       }
 

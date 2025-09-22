@@ -9,16 +9,16 @@ int main() {
   bsp.led.setup();
   bsp.uart.setup();
   bsp.uart.dma.setup(&uart_rx_buf);
-  bsp.cron.setup();
-  bsp.cron.add_job(light_breathe);
+  // bsp.cron.setup();
+  // bsp.cron.add_job(light_breathe);
 
   app.setup();
-  app.sendback.bind_buf(&uart_rx_buf);
-  // app.handle_cmd.bind_buf(&uart_rx_buf);
+  // app.sendback.bind_buf(&uart_rx_buf);
+  app.handle_cmd.bind_buf(&uart_rx_buf);
   //  main loop
   while (true) {
     bsp.uart.dma.rxbuf_daemon();
-    app.sendback.daemon();
-    // app.handle_cmd.daemon();
+    // app.sendback.daemon();
+    app.handle_cmd.daemon();
   }
 }
