@@ -40,6 +40,13 @@ GROUP_CONFIG = [
     ("USER", ["./src"], [".c", ".h"], False),  # Main files like main.c, it.c
 ]
 
+INCLUDE_CONFIG=[
+    "./src",
+    "./lib",
+    "./core/CMSIS/Device/ST/STM32F4xx/Include",
+    "./core/CMSIS/Include",
+    "./core/STM32F4xx_StdPeriph_Driver/inc"
+]
 
 # --- Helper Functions ---
 def prettify_xml(elem):
@@ -157,35 +164,11 @@ def main():
         if include_path_elem is not None:
             include_dirs = set()
             # Add directories from GROUP_CONFIG
-            for _, base_dirs, _, _ in GROUP_CONFIG:
-                for base_dir in base_dirs:
-                    # Normalize the path and add the directory
-                    full_path = os.path.join(PROJECT_ROOT, base_dir)
-                    rel_path = os.path.relpath(full_path, KEIL_PROJECT_DIR)
-                    include_dirs.add(rel_path.replace(os.sep, "\\"))
-
-            # Iterate through all .h files to ensure their directories are included
-            for group_name, base_dirs, extensions, recursive in GROUP_CONFIG:
-                if ".h" in extensions:
-                    for base_dir in base_dirs:
-                        full_base_dir = os.path.join(PROJECT_ROOT, base_dir)
-                        if not os.path.exists(full_base_dir):
-                            continue
-
-                        if recursive:
-                            for root, _, files in os.walk(full_base_dir):
-                                for file in files:
-                                    if file.endswith(".h"):
-                                        # Add the directory of this .h file to include paths
-                                        rel_path = os.path.relpath(root, KEIL_PROJECT_DIR)
-                                        include_dirs.add(rel_path.replace(os.sep, "\\"))
-                        else:
-                            for file in os.listdir(full_base_dir):
-                                full_path = os.path.join(full_base_dir, file)
-                                if os.path.isfile(full_path) and file.endswith(".h"):
-                                    # Add the directory of this .h file to include paths
-                                    rel_path = os.path.relpath(full_base_dir, KEIL_PROJECT_DIR)
-                                    include_dirs.add(rel_path.replace(os.sep, "\\"))
+            for base_dir in INCLUDE_CONFIG:
+                # Normalize the path and add the directory
+                full_path = os.path.join(PROJECT_ROOT, base_dir)
+                rel_path = os.path.relpath(full_path, KEIL_PROJECT_DIR)
+                include_dirs.add(rel_path.replace(os.sep, "\\"))
 
             # Sort for consistent output
             sorted_paths = sorted(list(include_dirs))

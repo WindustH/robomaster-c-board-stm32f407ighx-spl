@@ -114,6 +114,8 @@ target_compile_options(${TARGET}
     -ffunction-sections
     -fdata-sections
     -fstack-usage
+    -fdiagnostics-color=always
+    -fno-diagnostics-show-option
 )
 
 # build-type specific compiler options

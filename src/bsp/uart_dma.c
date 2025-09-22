@@ -2,6 +2,7 @@
 #include "bsp.h"
 #include "stm32f4xx_conf.h"
 #include <string.h>
+#include "core_cmFunc.h"
 
 // dma transmit buffer for uart data
 static volatile u8 dma_tx_buf[DMA_BUFFER_SIZE];
@@ -14,6 +15,11 @@ static volatile u8 tx_in_progress = 0;
 // init dma for uart
 // config both tx and rx streams with appropriate settings
 static void setup_impl(volatile buf *const _app_rx_buf) {
+  // Check for null pointer
+  if (_app_rx_buf == NULL) {
+    return;
+  }
+
   app_rx_buf = _app_rx_buf;
   app_rx_buf->len = 0;
 
@@ -89,9 +95,18 @@ static void setup_impl(volatile buf *const _app_rx_buf) {
 }
 
 static void send_dat_impl(const u8 *data, const u16 length) {
+  // Check for null pointer and buffer overflow
+  if (data == NULL || length == 0 || length > DMA_BUFFER_SIZE) {
+    return;
+  }
+
+  // Use interrupt control to prevent race condition
+  __disable_irq();
   while (tx_in_progress)
     ;
   tx_in_progress = 1;
+  __enable_irq();
+
   memcpy((void *)dma_tx_buf, data, length);
   DMA_Cmd(DMA2_Stream7, DISABLE);
   DMA_SetCurrDataCounter(DMA2_Stream7, length);
@@ -99,24 +114,36 @@ static void send_dat_impl(const u8 *data, const u16 length) {
 }
 
 static void send_str_impl(const char *str) {
+  // Check for null pointer
+  if (str == NULL) {
+    return;
+  }
+
   u16 i;
-  for (i = 0; str[i] != '\0'; i++)
+  for (i = 0; str[i] != '\0' && i < DMA_BUFFER_SIZE; i++)
     ;
-  send_dat_impl((u8 *)str, i);
+
+  // Only send if string fits in buffer
+  if (i < DMA_BUFFER_SIZE) {
+    send_dat_impl((u8 *)str, i);
+  }
 }
 
-static void save_rx_dat_impl() {
+static void save_rx_dat_to_buf() {
   static u16 last_read_pos = 0;
   u16 current_pos = DMA_BUFFER_SIZE - DMA_GetCurrDataCounter(DMA2_Stream2);
 
   if (current_pos != last_read_pos) {
     u16 bytes_to_copy = current_pos - last_read_pos;
 
-    // With ht and tc interrupts, current_pos is always > last_read_pos
-    // no dma buffer wrap-around to handle
-    memcpy((void *)&app_rx_buf->dat[app_rx_buf->len],
-           (void *)&dma_rx_buf[last_read_pos], bytes_to_copy);
-    app_rx_buf->len = (app_rx_buf->len + bytes_to_copy) % DMA_BUFFER_SIZE;
+    // Check if we have enough space in the app buffer
+    if ((app_rx_buf->len + bytes_to_copy) <= DMA_BUFFER_SIZE) {
+      // With ht and tc interrupts, current_pos is always > last_read_pos
+      // no dma buffer wrap-around to handle
+      memcpy((void *)&app_rx_buf->dat[app_rx_buf->len],
+             (void *)&dma_rx_buf[last_read_pos], bytes_to_copy);
+      app_rx_buf->len += bytes_to_copy;
+    }
 
     last_read_pos = current_pos;
   }
@@ -129,7 +156,10 @@ void DMA2_Stream7_IRQHandler() {
   if (DMA_GetITStatus(DMA2_Stream7, DMA_IT_TCIF7)) {
     // clear the transfer complete interrupt flag
     DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TCIF7);
+    // Use interrupt control to prevent race condition
+    __disable_irq();
     tx_in_progress = 0;
+    __enable_irq();
   }
 }
 
@@ -150,4 +180,4 @@ void DMA2_Stream2_IRQHandler() {
 const _UartDmaMod _uart_dma = {.send_dat = send_dat_impl,
                                .send_str = send_str_impl,
                                .setup = setup_impl,
-                               .rxbuf_daemon = save_rx_dat_impl};
+                               .rxbuf_daemon = save_rx_dat_to_buf};

@@ -3,7 +3,7 @@
 #include "bsp.h"
 #include "stm32f4xx_conf.h"
 #include "type.h"
-#include "ut/uthash.h"
+#include "core_cmFunc.h"
 
 static volatile procList proc_list;
 static void setup_impl() {
@@ -35,30 +35,48 @@ static void setup_impl() {
   TIM_Cmd(TIM3, ENABLE);
 }
 
-static u8 add_cron_job_impl(const proc p) {
+static u8 add_cron_job(const proc p) {
+  // Check for null pointer
+  if (p == NULL) {
+    return PROC_LIST_SIZE;
+  }
+
+  // Use interrupt control to prevent race condition
+  __disable_irq();
   for (u8 i = 0; i < PROC_LIST_SIZE; i++) {
-    if (~proc_list.state & (1U << i)) {
+    // Fix the bitwise operation to check if the bit is 0 (available)
+    if (!(proc_list.state & (1U << i))) {
       proc_list.procs[i] = p;
       proc_list.state |= (1U << i);
+      __enable_irq();
       return i;
     }
   }
+  __enable_irq();
   return PROC_LIST_SIZE;
 }
 
-static void remove_cron_job_impl(const u8 idx) {
-  proc_list.state &= ~(1U << idx);
+static void remove_cron_job(const u8 idx) {
+  // Check bounds
+  if (idx < PROC_LIST_SIZE) {
+    // Use interrupt control to prevent race condition
+    __disable_irq();
+    proc_list.state &= ~(1U << idx);
+    __enable_irq();
+  }
 }
 
 const _CronMod _cron = {.setup = setup_impl,
-                        .add_job = add_cron_job_impl,
-                        .remove_job = remove_cron_job_impl};
+                        .add_job = add_cron_job,
+                        .remove_job = remove_cron_job};
 
 void TIM3_IRQHandler() {
   // check if update interrupt flag is set
   if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) {
-    for (u8 i = 0; i < PROC_LIST_SIZE; i++)
-      if (proc_list.state & (1U << i))
+    for (u8 i = 0; i < PROC_LIST_SIZE; i++) {
+      if ((proc_list.state & (1U << i)) && (proc_list.procs[i] != NULL)) {
         proc_list.procs[i]();
+      }
+    }
   }
 }

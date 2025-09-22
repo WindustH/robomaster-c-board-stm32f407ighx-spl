@@ -1,0 +1,5 @@
+#include "type.h"
+
+const f32 PI = 3.14159265359f;
+const u32 TICK_PER_SECOND = 42000000U / (TIM3_PRESCALER * TIM3_PERIOD);
+const f32 SECOND_PER_TICK = 1.0f / (f32)TICK_PER_SECOND;
