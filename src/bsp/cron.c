@@ -3,9 +3,8 @@
 #include "bsp.h"
 #include "stm32f4xx_conf.h"
 #include "type.h"
-#include "core_cmFunc.h"
 
-static volatile procList proc_list;
+static volatile procList proc_list = {.state = 0, .procs = {NULL}};
 static void setup_impl() {
   // enable apb1 peripherial clocks (42000000Hz) for timer 3
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
@@ -42,17 +41,14 @@ static u8 add_cron_job(const proc p) {
   }
 
   // Use interrupt control to prevent race condition
-  __disable_irq();
   for (u8 i = 0; i < PROC_LIST_SIZE; i++) {
     // Fix the bitwise operation to check if the bit is 0 (available)
     if (!(proc_list.state & (1U << i))) {
       proc_list.procs[i] = p;
       proc_list.state |= (1U << i);
-      __enable_irq();
       return i;
     }
   }
-  __enable_irq();
   return PROC_LIST_SIZE;
 }
 
@@ -60,9 +56,7 @@ static void remove_cron_job(const u8 idx) {
   // Check bounds
   if (idx < PROC_LIST_SIZE) {
     // Use interrupt control to prevent race condition
-    __disable_irq();
     proc_list.state &= ~(1U << idx);
-    __enable_irq();
   }
 }
 
@@ -78,5 +72,7 @@ void TIM3_IRQHandler() {
         proc_list.procs[i]();
       }
     }
+    // Clear the interrupt flag to prevent continuous re-triggering
+    TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
   }
 }

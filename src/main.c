@@ -13,13 +13,12 @@ int main() {
   bsp.cron.add_job(light_breathe);
 
   app.setup();
-  // app.sendback.bind_buf(&uart_rx_buf);
-  app.handle_cmd.bind_buf(&uart_rx_buf);
-
+  app.sendback.bind_buf(&uart_rx_buf);
+  // app.handle_cmd.bind_buf(&uart_rx_buf);
   //  main loop
   while (true) {
     bsp.uart.dma.rxbuf_daemon();
-    // app.sendback.daemon();
+    app.sendback.daemon();
     // app.handle_cmd.daemon();
   }
 }

@@ -29,7 +29,7 @@ static void send_back_daemon() {
       // Add bounds checking for array access
       if (pos < DMA_BUFFER_SIZE && uart_rx_buf->dat[pos] == ' ') {
         u32v4 span = modu_span(last_send_pos, pos, DMA_BUFFER_SIZE);
-        bsp.uart.dma.send_str("# SENDBACK #\n\t");
+        bsp.uart.dma.send_str("\n# SENDBACK #\n\t");
 
         // Add bounds checking for span values
         if (span.x < DMA_BUFFER_SIZE && span.y <= DMA_BUFFER_SIZE &&

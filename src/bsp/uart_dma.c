@@ -2,7 +2,6 @@
 #include "bsp.h"
 #include "stm32f4xx_conf.h"
 #include <string.h>
-#include "core_cmFunc.h"
 
 // dma transmit buffer for uart data
 static volatile u8 dma_tx_buf[DMA_BUFFER_SIZE];
@@ -100,12 +99,9 @@ static void send_dat_impl(const u8 *data, const u16 length) {
     return;
   }
 
-  // Use interrupt control to prevent race condition
-  __disable_irq();
   while (tx_in_progress)
     ;
   tx_in_progress = 1;
-  __enable_irq();
 
   memcpy((void *)dma_tx_buf, data, length);
   DMA_Cmd(DMA2_Stream7, DISABLE);
@@ -156,10 +152,7 @@ void DMA2_Stream7_IRQHandler() {
   if (DMA_GetITStatus(DMA2_Stream7, DMA_IT_TCIF7)) {
     // clear the transfer complete interrupt flag
     DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TCIF7);
-    // Use interrupt control to prevent race condition
-    __disable_irq();
     tx_in_progress = 0;
-    __enable_irq();
   }
 }
 
