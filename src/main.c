@@ -20,6 +20,6 @@ int main() {
   while (true) {
     bsp.uart.dma.rxbuf_daemon();
     // app.sendback.daemon();
-    app.handle_cmd.daemon();
+    // app.handle_cmd.daemon();
   }
 }

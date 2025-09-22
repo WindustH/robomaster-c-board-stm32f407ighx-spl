@@ -180,7 +180,30 @@ class ProjectManager:
         if not self.elf_file.exists():
             print_status("ELF file not generated!", "error")
             sys.exit(1)
+
+        # Run keil converter to generate keil project files
+        self._run_keil_converter()
+
         print_status("Build completed successfully", "success")
+
+    def _run_keil_converter(self):
+        """Run the Keil converter script to generate Keil project files."""
+        print_header("Generating Keil Project Files")
+        keil_converter_path = self.project_dir / "keil_convertor" / "to_keil.py"
+
+        if not keil_converter_path.exists():
+            print_status(f"Keil converter script not found at {keil_converter_path}", "warning")
+            return
+
+        try:
+            # Run the keil converter script
+            cmd = [sys.executable, keil_converter_path.as_posix()]
+            self._run_command(cmd, cwd=keil_converter_path.parent)
+            print_status("Keil project files generated successfully", "success")
+        except subprocess.CalledProcessError:
+            print_status("Failed to generate Keil project files", "error")
+        except Exception as e:
+            print_status(f"Error running Keil converter: {str(e)}", "error")
 
     def flash(self, interface: Optional[str] = None):
         if not self.elf_file.exists():
