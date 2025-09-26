@@ -13,7 +13,7 @@ UVOPTX_TEMPLATE = "template.uvoptx"
 PROJECT_ROOT = ".."
 
 # Directory to store the generated Keil project files
-KEIL_PROJECT_DIR = "../../keil_ver"
+KEIL_PROJECT_DIR = "../keil_ver"
 
 # Output Keil project name
 OUTPUT_PROJECT_NAME = "keil_stm32f407ighx"
