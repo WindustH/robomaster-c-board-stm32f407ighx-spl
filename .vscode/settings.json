@@ -1,22 +1,22 @@
 {
-    "files.exclude": {
-        "build": true,
-        ".cache": true,
-        "inc/core": true,
-        // "inc/stm32f4xx_conf.h": true,
-        "STM32F407.svd": true,
-        "STM32F407IGHX_FLASH.ld": true,
-        "toolchain-arm-none-eabi.cmake": true,
-        ".clangd": true,
-        ".gitignore": true,
-        // "CMakeLists.txt": true,
-        "dev.py": true,
-        "startup": true,
-        "startup_mdkarm": true,
-        "keil_convertor": true,
-        "core": true,
-        "lib": true
-    },
+    // "files.exclude": {
+    //     "build": true,
+    //     ".cache": true,
+    //     "inc/core": true,
+    //     // "inc/stm32f4xx_conf.h": true,
+    //     "STM32F407.svd": true,
+    //     "STM32F407IGHX_FLASH.ld": true,
+    //     "toolchain-arm-none-eabi.cmake": true,
+    //     ".clangd": true,
+    //     ".gitignore": true,
+    //     // "CMakeLists.txt": true,
+    //     "dev.py": true,
+    //     "startup": true,
+    //     "startup_mdkarm": true,
+    //     "keil_convertor": true,
+    //     "core": true,
+    //     "lib": true
+    // },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "[c]": {
         "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"

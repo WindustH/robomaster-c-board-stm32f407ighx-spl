@@ -27,60 +27,30 @@ set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/lib)
 set(DRIVER_DIR ${CMAKE_SOURCE_DIR}/core)
 set(CMSIS_DIR ${DRIVER_DIR}/CMSIS)
-set(STDPERIPH_DIR ${DRIVER_DIR}/STM32F4xx_StdPeriph_Driver)
+set(HAL_DIR ${DRIVER_DIR}/STM32F4xx_HAL_Driver)
 set(STARTUP_DIR ${CMAKE_SOURCE_DIR}/startup)
 
 # application source files
 file(GLOB_RECURSE APP_SOURCES ${SOURCE_DIR}/*.c)
 
-# driver source files
+# hal driver sources
 set(DRIVER_SOURCES
     # cmsis system files
-    ${CMSIS_DIR}/system_stm32f4xx.c
+    ${CMSIS_DIR}/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
 
-    # stdperiph driver sources
-    ${STDPERIPH_DIR}/src/misc.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_adc.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_can.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_cec.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_crc.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_cryp.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_cryp_aes.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_cryp_des.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_cryp_tdes.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_dac.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_dbgmcu.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_dcmi.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_dfsdm.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_dma.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_dma2d.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_dsi.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_exti.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_flash.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_flash_ramfunc.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_fmpi2c.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_fsmc.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_gpio.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_hash.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_hash_md5.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_hash_sha1.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_i2c.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_iwdg.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_lptim.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_ltdc.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_pwr.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_qspi.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_rcc.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_rng.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_rtc.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_sai.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_sdio.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_spdifrx.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_spi.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_syscfg.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_tim.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_usart.c
-    ${STDPERIPH_DIR}/src/stm32f4xx_wwdg.c
+    # hal driver sources
+    ${HAL_DIR}/Src/stm32f4xx_hal.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_rcc.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_gpio.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_dma.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_uart.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_tim.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_cortex.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_flash.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_flash_ex.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_pwr.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_pwr_ex.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_exti.c
 )
 
 # assembly startup files
@@ -103,7 +73,7 @@ target_include_directories(${TARGET}
     ${INCLUDE_DIR}
     ${CMSIS_DIR}/Include
     ${CMSIS_DIR}/Device/ST/STM32F4xx/Include
-    ${STDPERIPH_DIR}/inc
+    ${HAL_DIR}/Inc
 )
 
 # common compiler options
@@ -134,7 +104,7 @@ target_compile_definitions(${TARGET}
     PRIVATE
     STM32F40_41xxx
     ${MCU_DEVICE}
-    USE_STDPERIPH_DRIVER
+    USE_HAL_DRIVER
     HSE_VALUE=${HSE_FREQ}
 )
 

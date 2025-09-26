@@ -1,37 +1,39 @@
 #include "bsp/cron.h"
 #include "app/cron_job.h"
 #include "bsp.h"
-#include "stm32f4xx_conf.h"
+#include "stm32f4xx_hal.h"
 #include "type.h"
 
+static TIM_HandleTypeDef htim3;
 static volatile procList proc_list = {.state = 0, .procs = {NULL}};
+
 static void setup_impl() {
-  // enable apb1 peripherial clocks (42000000Hz) for timer 3
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+  // Enable APB1 peripheral clocks for timer 3
+  __HAL_RCC_TIM3_CLK_ENABLE();
 
-  // config timer 3
-  TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-  // prescale timer 3 to 100kHz
-  TIM_TimeBaseStructure.TIM_Prescaler = TIM3_PRESCALER;
-  TIM_TimeBaseStructure.TIM_Period = TIM3_PERIOD;
-  TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-  TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
-  TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);
+  // Config timer 3
+  htim3.Instance = TIM3;
+  // Prescale timer 3 to 100kHz
+  htim3.Init.Prescaler = TIM3_PRESCALER;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = TIM3_PERIOD;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK) {
+    // Error handling
+    while (1)
+      ;
+  }
 
-  // config nested vector interrupt controller for timer 3 interrupts
-  NVIC_InitTypeDef NVIC_InitStructure;
-  // config nvic for timer 3
-  NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
-  // enable interrupt
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  // apply nvic config
-  NVIC_Init(&NVIC_InitStructure);
+  // Start timer 3 interrupts
+  if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK) {
+    // Error handling
+    while (1)
+      ;
+  }
 
-  // start timer 3
-  TIM_Cmd(TIM3, ENABLE);
+  // Enable interrupt in NVIC
+  HAL_NVIC_SetPriority(TIM3_IRQn, 0, 1);
+  HAL_NVIC_EnableIRQ(TIM3_IRQn);
 }
 
 static u8 add_cron_job(const proc p) {
@@ -65,14 +67,15 @@ const _CronMod _cron = {.setup = setup_impl,
                         .remove_job = remove_cron_job};
 
 void TIM3_IRQHandler() {
-  // check if update interrupt flag is set
-  if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) {
+  HAL_TIM_IRQHandler(&htim3);
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+  if (htim->Instance == TIM3) {
     for (u8 i = 0; i < PROC_LIST_SIZE; i++) {
       if ((proc_list.state & (1U << i)) && (proc_list.procs[i] != NULL)) {
         proc_list.procs[i]();
       }
     }
-    // Clear the interrupt flag to prevent continuous re-triggering
-    TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
   }
 }

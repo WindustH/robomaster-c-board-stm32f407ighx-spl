@@ -1,6 +1,6 @@
 #include "app/cron_job.h"
 #include "bsp.h"
-#include "stm32f4xx_conf.h"
+#include "stm32f4xx_hal.h"
 #include "type.h"
 #include "utils/map.h"
 #include <math.h>
@@ -15,8 +15,7 @@ void light_breathe() {
 
   static f32 brightness_phase = 0.0f;
   static f32 hue_phase = 0.0f;
-  // clear the interrupt pending bit
-  TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+  // The interrupt pending bit is now cleared by the HAL library
 
   // update phase
   brightness_phase += brightness_step;

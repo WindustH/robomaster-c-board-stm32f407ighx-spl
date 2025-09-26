@@ -1,41 +1,47 @@
 #include "bsp.h"
-#include "stm32f4xx_conf.h"
+#include "stm32f4xx_hal.h"
+
+UART_HandleTypeDef huart1;
 
 static void setup_impl() {
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-  // setup gpio
-  // for transmit
-  GPIO_InitTypeDef GPIO_InitStructure;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);
-  // for receive
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_USART1);
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  USART_InitTypeDef USART_InitStructure;
-  // baud rate
-  USART_InitStructure.USART_BaudRate = 38400;
-  USART_InitStructure.USART_HardwareFlowControl =
-      USART_HardwareFlowControl_None;
-  // transmit and receive mode
-  USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
-  // no parity
-  USART_InitStructure.USART_Parity = USART_Parity_No;
-  USART_InitStructure.USART_StopBits = USART_StopBits_1;
-  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+  // Enable clocks
+  __HAL_RCC_USART1_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  USART_Init(USART1, &USART_InitStructure);
-  USART_Cmd(USART1, ENABLE);
+  // GPIO configuration for USART1 TX (PA9)
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  // GPIO configuration for USART1 RX (PB7)
+  GPIO_InitStruct.Pin = GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  // UART configuration
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 38400;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+
+  if (HAL_UART_Init(&huart1) != HAL_OK) {
+    // Error handling
+    while (1)
+      ;
+  }
 }
 
 _UartMod _uart = {

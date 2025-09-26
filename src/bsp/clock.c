@@ -1,42 +1,46 @@
 #include "bsp.h"
-#include "stm32f4xx_conf.h"
+#include "stm32f4xx_hal.h"
 
 void setup_impl() {
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  // enable hse (high speed external) oscillator
-  RCC_HSEConfig(RCC_HSE_ON);
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-  // wait for hse to be ready
-  while (RCC_GetFlagStatus(RCC_FLAG_HSERDY) == RESET)
-    ;
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 12;
+  RCC_OscInitStruct.PLL.PLLN = 336;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 7;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+    // Error handling
+    while (1)
+      ;
+  }
 
-  // configure pll
-  RCC_PLLConfig(RCC_PLLSource_HSE, 12, 336, 2, 7);
-  // parameters: source, m, n, p, q
-  // sysclk = ((hse / m) * n) / p
-  // for 168mhz: ((8mhz / 8) * 336) / 2 = 168mhz
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+                                | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  // enable pll
-  RCC_PLLCmd(ENABLE);
-
-  // wait for pll to be ready
-  while (RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET)
-    ;
-
-  // configure flash latency for high speed
-  FLASH_SetLatency(FLASH_Latency_5);
-
-  // configure ahb, apb1, apb2 prescalers
-  RCC_HCLKConfig(RCC_SYSCLK_Div1); // ahb = sysclk
-  RCC_PCLK1Config(RCC_HCLK_Div4);  // apb1 = hclk/4 (42mhz max)
-  RCC_PCLK2Config(RCC_HCLK_Div2);  // apb2 = hclk/2 (84mhz max)
-
-  // select pll as system clock source
-  RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
-
-  // wait until pll is used as system clock source
-  while (RCC_GetSYSCLKSource() != 0x08)
-    ;
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK) {
+    // Error handling
+    while (1)
+      ;
+  }
 }
 
 const _ClockMod _clock = {

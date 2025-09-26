@@ -1,70 +1,66 @@
 #include "bsp.h"
-#include "stm32f4xx_conf.h"
+#include "stm32f4xx_hal.h"
+
+static TIM_HandleTypeDef htim5;
 
 static void setup_impl() {
-  // enable clock(42000000Hz) for timer 5 (pwm outpput)
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
-  // enable clock for gpioh
-  // (pins to control led)
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOH, ENABLE);
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  // gpio config for led
-  GPIO_InitTypeDef GPIO_InitStructure;
-  // pin 10,11,12 of port h (gpioh)
-  // (pins to control led)
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12;
-  // set to alternate function mode because these pins output pwm waves from
-  // timer 5
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  // set to high speed
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  // set to push-pull output type to drive led better
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  // enable pull-up resistor so the led is off by default
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-  // apply conf to gpioh
-  GPIO_Init(GPIOH, &GPIO_InitStructure);
-  // connect timer 5 to gpioh
-  GPIO_PinAFConfig(GPIOH, GPIO_PinSource10, GPIO_AF_TIM5);
-  GPIO_PinAFConfig(GPIOH, GPIO_PinSource11, GPIO_AF_TIM5);
-  GPIO_PinAFConfig(GPIOH, GPIO_PinSource12, GPIO_AF_TIM5);
+  // Enable clock for timer 5 and GPIOH
+  __HAL_RCC_TIM5_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
 
-  // timer output compare structure (for pwm)
-  TIM_OCInitTypeDef TIM_OCInitStructure;
-  TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-  // config timer 5 for pwm output
-  // auto-reload value
-  // define the period of pwm
-  TIM_TimeBaseStructure.TIM_Period = 255;
-  // prescale the timer to 1Mhz
-  TIM_TimeBaseStructure.TIM_Prescaler = 42 - 1;
-  // no clock division
-  TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-  // count from 0 to period-1 and repeat
-  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-  // apply conf to timer 5
-  TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure);
-  // config output compare for pwm
-  TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  // duty cycle (led off)
-  TIM_OCInitStructure.TIM_Pulse = 0;
-  // high <-> active
-  TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-  // apply output config for 3 channels of timer 5
-  TIM_OC1Init(TIM5, &TIM_OCInitStructure);
-  TIM_OC1PreloadConfig(TIM5, TIM_OCPreload_Enable);
-  TIM_OC2Init(TIM5, &TIM_OCInitStructure);
-  TIM_OC2PreloadConfig(TIM5, TIM_OCPreload_Enable);
-  TIM_OC3Init(TIM5, &TIM_OCInitStructure);
-  TIM_OC3PreloadConfig(TIM5, TIM_OCPreload_Enable);
-  // enable auto-reload preload for timer 5
-  TIM_ARRPreloadConfig(TIM5, ENABLE);
+  // GPIO config for LED
+  GPIO_InitStruct.Pin = GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;
+  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
 
-  // enable pwm outputs of timer 5 (a basic timer), for led control
-  TIM_CtrlPWMOutputs(TIM5, ENABLE);
-  TIM_Cmd(TIM5, ENABLE);
-  // set initial led state to off
+  // Timer configuration for PWM output
+  htim5.Instance = TIM5;
+  htim5.Init.Prescaler = 42 - 1;
+  htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim5.Init.Period = 255;
+  htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  if (HAL_TIM_PWM_Init(&htim5) != HAL_OK) {
+    // Error handling
+    while (1)
+      ;
+  }
+
+  // PWM configuration
+  TIM_OC_InitTypeDef sConfigOC = {0};
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+
+  if (HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_1) != HAL_OK) {
+    // Error handling
+    while (1)
+      ;
+  }
+
+  if (HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_2) != HAL_OK) {
+    // Error handling
+    while (1)
+      ;
+  }
+
+  if (HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_3) != HAL_OK) {
+    // Error handling
+    while (1)
+      ;
+  }
+
+  // Start PWM channels
+  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_3);
+
+  // Set initial LED state to off
   bsp.led.show(0x00000000);
 }
 
@@ -72,7 +68,7 @@ static void show_impl(const u32 argb) {
   u32 alpha;
   u32 red, green, blue;
 
-  // extract channels
+  // Extract channels
   alpha = (argb & 0xFF000000) >> 24;
   red = (argb & 0x00FF0000) >> 16;
   green = (argb & 0x0000FF00) >> 8;
@@ -82,10 +78,10 @@ static void show_impl(const u32 argb) {
   green = green * alpha / 255;
   blue = blue * alpha / 255;
 
-  // set timer 5 to output pwm wave
-  TIM_SetCompare1(TIM5, blue);
-  TIM_SetCompare2(TIM5, green);
-  TIM_SetCompare3(TIM5, red);
+  // Set timer 5 to output PWM wave
+  __HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_1, blue);
+  __HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_2, green);
+  __HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_3, red);
 }
 
 const _LedMod _led = {.setup = setup_impl, .show = show_impl};

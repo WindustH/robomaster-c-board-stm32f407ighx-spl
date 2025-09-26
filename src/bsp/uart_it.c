@@ -1,28 +1,25 @@
 #include "bsp/uart_it.h"
 #include "bsp.h"
-#include "stm32f4xx_conf.h"
+#include "stm32f4xx_hal.h"
+
+// External UART handle from uart.c
+extern UART_HandleTypeDef huart1;
 
 static void setup_impl() {
-  // config nvic
-  NVIC_InitTypeDef NVIC_InitStructure;
-  NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
-  NVIC_Init(&NVIC_InitStructure);
+  // Enable interrupt in NVIC
+  HAL_NVIC_SetPriority(USART1_IRQn, 1, 1);
+  HAL_NVIC_EnableIRQ(USART1_IRQn);
 
-  USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+  // Enable UART receive interrupt
+  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
 }
 
 static void send_byte_impl(const u8 byte) {
-  USART_SendData(USART1, byte);
-  while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-    ;
+  HAL_UART_Transmit(&huart1, &byte, 1, HAL_MAX_DELAY);
 }
+
 static void send_str_impl(const char *str) {
-  u16 i;
-  for (i = 0; str[i] != '\0'; i++)
-    send_byte_impl(str[i]);
+  HAL_UART_Transmit(&huart1, (uint8_t*)str, strlen(str), HAL_MAX_DELAY);
 }
 
 volatile u8 uart_rx_data = 0x00;
@@ -39,12 +36,9 @@ static u8 has_new_byte() {
 static u8 read_byte_impl() { return uart_rx_data; }
 
 void USART1_IRQHandler() {
-  if (USART_GetITStatus(USART1, USART_IT_RXNE) == SET) {
-    uart_rx_data = USART_ReceiveData(USART1);
-    uart_rx_flag = 1;
-    USART_ClearITPendingBit(USART1, USART_IT_RXNE);
-  }
+  HAL_UART_IRQHandler(&huart1);
 }
+
 
 const _UartItMod _uart_it = {
     .setup = setup_impl,
