@@ -8,18 +8,27 @@ static TIM_HandleTypeDef htim3;
 static volatile procList proc_list = {.state = 0, .procs = {NULL}};
 
 static void setup_impl() {
-  // Enable APB1 peripheral clocks for timer 3
-  __HAL_RCC_TIM3_CLK_ENABLE();
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
 
-  // Config timer 3
   htim3.Instance = TIM3;
-  // Prescale timer 3 to 100kHz
   htim3.Init.Prescaler = TIM3_PRESCALER;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = TIM3_PERIOD;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK) {
-    // Error handling
+    while (1)
+      ;
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK) {
+    while (1)
+      ;
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK) {
     while (1)
       ;
   }
@@ -30,10 +39,6 @@ static void setup_impl() {
     while (1)
       ;
   }
-
-  // Enable interrupt in NVIC
-  HAL_NVIC_SetPriority(TIM3_IRQn, 0, 1);
-  HAL_NVIC_EnableIRQ(TIM3_IRQn);
 }
 
 static u8 add_cron_job(const proc p) {

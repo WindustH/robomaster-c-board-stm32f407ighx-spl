@@ -9,11 +9,8 @@ int main() {
   // Initialize HAL
   HAL_Init();
 
-  // Setup system clock
-  bsp.clock.setup();
-
-  // Setup BSP modules
   bsp.setup();
+  bsp.clock.setup();
   bsp.led.setup();
   // bsp.uart.setup();
   // bsp.uart.dma.setup(&uart_rx_buf);
@@ -26,6 +23,7 @@ int main() {
 
   // Main loop
   while (true) {
+    // bsp.led.show(0xffffffff);
     // bsp.uart.dma.rxbuf_daemon();
     // app.sendback.daemon();
     // app.handle_cmd.daemon();
