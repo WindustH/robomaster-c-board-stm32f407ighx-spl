@@ -1,4 +1,3 @@
-#include "bsp/uart_dma.h"
 #include "bsp.h"
 #include "stm32f4xx_hal.h"
 #include <string.h>
@@ -139,15 +138,11 @@ static void save_rx_dat_to_buf() {
 
 // DMA transmit stream interrupt handler
 // Handles transfer complete interrupt for UART TX
-void DMA2_Stream7_IRQHandler() {
-  HAL_DMA_IRQHandler(&hdma_usart1_tx);
-}
+void DMA2_Stream7_IRQHandler() { HAL_DMA_IRQHandler(&hdma_usart1_tx); }
 
 // DMA receive stream interrupt handler
 // Handles both half transfer and transfer complete interrupts for UART RX
-void DMA2_Stream2_IRQHandler() {
-  HAL_DMA_IRQHandler(&hdma_usart1_rx);
-}
+void DMA2_Stream2_IRQHandler() { HAL_DMA_IRQHandler(&hdma_usart1_rx); }
 
 // Callback for DMA transfer complete
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {

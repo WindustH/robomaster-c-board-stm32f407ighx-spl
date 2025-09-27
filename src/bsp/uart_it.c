@@ -1,6 +1,6 @@
-#include "bsp/uart_it.h"
 #include "bsp.h"
 #include "stm32f4xx_hal.h"
+#include "type.h"
 
 // External UART handle from uart.c
 extern UART_HandleTypeDef huart1;
@@ -19,7 +19,7 @@ static void send_byte_impl(const u8 byte) {
 }
 
 static void send_str_impl(const char *str) {
-  HAL_UART_Transmit(&huart1, (uint8_t*)str, strlen(str), HAL_MAX_DELAY);
+  HAL_UART_Transmit(&huart1, (uint8_t *)str, strlen(str), HAL_MAX_DELAY);
 }
 
 volatile u8 uart_rx_data = 0x00;
@@ -35,10 +35,7 @@ static u8 has_new_byte() {
 
 static u8 read_byte_impl() { return uart_rx_data; }
 
-void USART1_IRQHandler() {
-  HAL_UART_IRQHandler(&huart1);
-}
-
+void USART1_IRQHandler() { HAL_UART_IRQHandler(&huart1); }
 
 const _UartItMod _uart_it = {
     .setup = setup_impl,

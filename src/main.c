@@ -3,7 +3,7 @@
 #include "bsp.h"
 #include "stm32f4xx_hal.h"
 
-static volatile buf uart_rx_buf;
+// static volatile buf uart_rx_buf;
 
 int main() {
   // Initialize HAL

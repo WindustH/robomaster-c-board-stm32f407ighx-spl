@@ -9,7 +9,7 @@ Index:
   Background: Build
 
 InlayHints:
-  Enabled: false
+  Enabled: true
 
 ---
 If:

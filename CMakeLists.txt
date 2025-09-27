@@ -52,6 +52,7 @@ set(DRIVER_SOURCES
     ${HAL_DIR}/Src/stm32f4xx_hal_pwr.c
     ${HAL_DIR}/Src/stm32f4xx_hal_pwr_ex.c
     ${HAL_DIR}/Src/stm32f4xx_hal_exti.c
+    ${HAL_DIR}/Src/stm32f4xx_hal_can.c
 )
 
 # assembly startup files

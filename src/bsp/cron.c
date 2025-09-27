@@ -1,4 +1,3 @@
-#include "bsp/cron.h"
 #include "app/cron_job.h"
 #include "bsp.h"
 #include "stm32f4xx_hal.h"
@@ -71,9 +70,7 @@ const _CronMod _cron = {.setup = setup_impl,
                         .add_job = add_cron_job,
                         .remove_job = remove_cron_job};
 
-void TIM3_IRQHandler() {
-  HAL_TIM_IRQHandler(&htim3);
-}
+void TIM3_IRQHandler() { HAL_TIM_IRQHandler(&htim3); }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if (htim->Instance == TIM3) {

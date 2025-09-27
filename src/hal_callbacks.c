@@ -14,15 +14,18 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *tim_baseHandle) {
   }
 }
 
-// Weak definitions for HAL callback functions that may be missing
-__weak void HAL_TIMEx_CommutCallback(TIM_HandleTypeDef *htim) {
-  // NOTE : This function Should not be modified, when the callback is needed,
-  //        the HAL_TIMEx_CommutCallback could be implemented in the user file
-  (void)htim;
-}
+void HAL_CAN_MspInit(CAN_HandleTypeDef *canHandle) {
 
-__weak void HAL_TIMEx_BreakCallback(TIM_HandleTypeDef *htim) {
-  // NOTE : This function Should not be modified, when the callback is needed,
-  //        the HAL_TIMEx_BreakCallback could be implemented in the user file
-  (void)htim;
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  if (canHandle->Instance == CAN1) {
+
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+
+    GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF9_CAN1;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+  }
 }
