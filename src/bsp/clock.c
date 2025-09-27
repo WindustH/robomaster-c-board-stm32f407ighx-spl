@@ -1,7 +1,7 @@
 #include "bsp.h"
 #include "stm32f4xx.h"
 
-void setup_impl() {
+void setup_clock() {
   // 1. Enable PWR clock and set voltage scaling
   RCC->APB1ENR |= RCC_APB1ENR_PWREN;
   PWR->CR |= PWR_CR_VOS; // Scale 1
@@ -45,5 +45,5 @@ void setup_impl() {
 }
 
 const _ClockMod _clock = {
-    .setup = setup_impl,
+    .setup = setup_clock,
 };

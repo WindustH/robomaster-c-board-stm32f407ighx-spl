@@ -7,20 +7,13 @@ static volatile u8 dma_tx_buf[DMA_BUFFER_SIZE];
 // DMA receive buffer for UART data
 static volatile u8 dma_rx_buf[DMA_BUFFER_SIZE];
 // DMA transmit buffer for echo
-static volatile buf *app_rx_buf;
 static volatile u8 tx_in_progress = 0;
+
+static void (*proc_rx_dat)(volatile u8 const *dat, const u16 len);
 
 // Init DMA for UART
 // Config both tx and rx streams with appropriate settings
-static void setup_impl(volatile buf *const _app_rx_buf) {
-  // Check for null pointer
-  if (_app_rx_buf == NULL) {
-    return;
-  }
-
-  app_rx_buf = _app_rx_buf;
-  app_rx_buf->len = 0;
-
+static void setup_uart_dma() {
   // 1. Enable DMA2 clock
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
 
@@ -109,46 +102,16 @@ static void send_str_impl(const char *str) {
   }
 
   u16 len = strlen(str);
-
   // Only send if string fits in buffer
   if (len > 0 && len < DMA_BUFFER_SIZE) {
     send_dat_impl((u8 *)str, len);
   }
 }
 
-static void save_rx_dat_to_buf() {
-  static u16 last_read_pos = 0;
-  u16 current_pos = DMA_BUFFER_SIZE - DMA2_Stream2->NDTR;
-
-  if (current_pos != last_read_pos) {
-    u16 bytes_to_copy;
-    if (current_pos > last_read_pos) {
-      bytes_to_copy = current_pos - last_read_pos;
-    } else { // Wrap around
-      bytes_to_copy = DMA_BUFFER_SIZE - last_read_pos + current_pos;
-    }
-
-    // Check if we have enough space in the app buffer
-    if ((app_rx_buf->len + bytes_to_copy) <= DMA_BUFFER_SIZE) {
-      if (current_pos > last_read_pos) {
-        memcpy((void *)&app_rx_buf->dat[app_rx_buf->len],
-               (void *)&dma_rx_buf[last_read_pos], bytes_to_copy);
-      } else {
-        u16 first_chunk = DMA_BUFFER_SIZE - last_read_pos;
-        memcpy((void *)&app_rx_buf->dat[app_rx_buf->len],
-               (void *)&dma_rx_buf[last_read_pos], first_chunk);
-        app_rx_buf->len += first_chunk;
-        memcpy((void *)&app_rx_buf->dat[app_rx_buf->len], (void *)dma_rx_buf,
-               current_pos);
-        bytes_to_copy = first_chunk + current_pos;
-      }
-      app_rx_buf->len += bytes_to_copy;
-    }
-
-    last_read_pos = current_pos;
-  }
+static void bind_proc_data_func(void (*cb)(volatile u8 const *dat,
+                                           const u16 len)) {
+  proc_rx_dat = cb;
 }
-
 // DMA transmit stream interrupt handler
 void DMA2_Stream7_IRQHandler() {
   if (DMA2->HISR & DMA_HISR_TCIF7) {
@@ -163,11 +126,11 @@ void DMA2_Stream2_IRQHandler() {
   if (DMA2->LISR & (DMA_LISR_TCIF2 | DMA_LISR_HTIF2)) {
     // Clear flags
     DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2;
-    bsp.uart.dma.rxbuf_daemon();
+    proc_rx_dat(dma_rx_buf, DMA_BUFFER_SIZE - DMA2_Stream2->NDTR);
   }
 }
 
 const _UartDmaMod _uart_dma = {.send_dat = send_dat_impl,
                                .send_str = send_str_impl,
-                               .setup = setup_impl,
-                               .rxbuf_daemon = save_rx_dat_to_buf};
+                               .setup = setup_uart_dma,
+                               .bind_rx_callback = bind_proc_data_func};

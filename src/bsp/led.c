@@ -1,7 +1,7 @@
 #include "bsp.h"
 #include "stm32f4xx.h"
 
-static void setup_impl() {
+static void setup_led() {
   // 1. Enable peripheral clocks
   RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;  // TIM5 clock
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN; // GPIOH clock
@@ -53,7 +53,7 @@ static void setup_impl() {
   bsp.led.show(0x00000000);
 }
 
-static void show_impl(const u32 argb) {
+static void change_color(const u32 argb) {
   u32 alpha;
   u32 red, green, blue;
 
@@ -73,4 +73,4 @@ static void show_impl(const u32 argb) {
   TIM5->CCR3 = red;
 }
 
-const _LedMod _led = {.setup = setup_impl, .show = show_impl};
+const _LedMod _led = {.setup = setup_led, .show = change_color};

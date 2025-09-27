@@ -1,7 +1,8 @@
 #include "bsp.h"
 #include "stm32f4xx.h"
 
-static void setup_impl(void) {
+static void (*proc_can_msg)(canRxH *rx_header, u8 *data);
+static void setup_can(void) {
   // 1. Enable GPIO and CAN1 clocks
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
   RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
@@ -50,7 +51,7 @@ static void setup_impl(void) {
   NVIC_EnableIRQ(CAN1_RX0_IRQn);
 }
 
-static u8 transmit_impl(canTxH *pHeader, u8 aData[], u32 *pTxMailbox) {
+static u8 send_can_msg(canTxH *pHeader, u8 aData[], u32 *pTxMailbox) {
   // Find an empty mailbox
   u32 txMailbox = (CAN1->TSR & CAN_TSR_CODE) >> CAN_TSR_CODE_Pos;
   if (txMailbox > 2) {
@@ -77,7 +78,7 @@ static u8 transmit_impl(canTxH *pHeader, u8 aData[], u32 *pTxMailbox) {
   return 0; // Success
 }
 
-static u8 receive_impl(canRxH *pHeader, u8 aData[]) {
+static u8 recv_can_msg(canRxH *pHeader, u8 aData[]) {
   if ((CAN1->RF0R & CAN_RF0R_FMP0) == 0) {
     return 1; // Error, no message pending
   }
@@ -104,20 +105,21 @@ static u8 receive_impl(canRxH *pHeader, u8 aData[]) {
   return 0; // Success
 }
 
-// Forward declaration for motor update function
-void motor_update_feedback(canRxH *rx_header, uint8_t *data);
+static void bind_proc_msg_func(void (*cb)(canRxH *rx_header, u8 *data)) {
+  proc_can_msg = cb;
+}
 
 void CAN1_RX0_IRQHandler(void) {
   u8 rxData[8];
   canRxH rxHeader;
 
   if ((CAN1->RF0R & CAN_RF0R_FMP0) != 0) {
-    receive_impl(&rxHeader, rxData);
-    // Update motor feedback if this is a motor message
-    motor_update_feedback(&rxHeader, rxData);
-    // Process data (e.g., put it in a queue)
+    bsp.can.read(&rxHeader, rxData);
+    proc_can_msg(&rxHeader, rxData);
   }
 }
 
-const _CanMod _can = {
-    .setup = setup_impl, .send = transmit_impl, .read = receive_impl};
+const _CanMod _can = {.setup = setup_can,
+                      .send = send_can_msg,
+                      .read = recv_can_msg,
+                      .bind_rx_callback = bind_proc_msg_func};

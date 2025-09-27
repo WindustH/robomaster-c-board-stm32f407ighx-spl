@@ -5,7 +5,7 @@
 
 static volatile procList proc_list = {.state = 0, .procs = {NULL}};
 
-static void setup_impl() {
+static void setup_cron() {
   // 1. Enable TIM3 clock
   RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 
@@ -51,7 +51,7 @@ static void remove_cron_job(const u8 idx) {
   }
 }
 
-const _CronMod _cron = {.setup = setup_impl,
+const _CronMod _cron = {.setup = setup_cron,
                         .add_job = add_cron_job,
                         .remove_job = remove_cron_job};
 

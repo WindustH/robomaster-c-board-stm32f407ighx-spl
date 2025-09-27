@@ -2,7 +2,7 @@
 #include "stm32f4xx.h"
 #include "type.h"
 
-static void setup_impl() {
+static void setup_uart_it() {
   // Enable interrupt in NVIC
   NVIC_SetPriority(USART1_IRQn, 1);
   NVIC_EnableIRQ(USART1_IRQn);
@@ -51,7 +51,7 @@ void USART1_IRQHandler() {
 }
 
 const _UartItMod _uart_it = {
-    .setup = setup_impl,
+    .setup = setup_uart_it,
     .send_str = send_str_impl,
     .send_byte = send_byte_impl,
     .has_new_byte = has_new_byte,

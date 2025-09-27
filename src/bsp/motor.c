@@ -2,21 +2,11 @@
 #include "stm32f4xx.h"
 #include "type.h"
 
-// Motor CAN message IDs
-#define MOTOR_CONTROL_ID_1_4 0x200U
-#define MOTOR_CONTROL_ID_5_8 0x1FFU
-
-// Feedback message IDs (0x200 + motor ID)
-#define MOTOR_FEEDBACK_BASE 0x200U
-
-// Array to store feedback for 8 motors
-static motorFb motor_feedback[8] = {0};
-
-// Global target current for 8 motors (initialized to zero)
+static motorFb motor_status[8] = {0};
 static i16 motor_current_targets[8] = {0};
 
 // Setup function - configure CAN filter for motor feedback
-static void setup_impl(void) {
+static void setup_motor(void) {
   // Enter filter initialization mode
   CAN1->FMR |= CAN_FMR_FINIT;
 
@@ -104,7 +94,7 @@ static u8 read_feedback(u8 motor_id, motorFb *feedback) {
   if (motor_id < 1 || motor_id > 8 || feedback == NULL) {
     return 1; // Invalid parameters
   }
-  *feedback = motor_feedback[motor_id - 1];
+  *feedback = motor_status[motor_id - 1];
   return 0; // Success
 }
 
@@ -117,18 +107,19 @@ void motor_update_feedback(canRxH *rx_header, u8 *data) {
   u32 std_id = rx_header->StdId;
   if (std_id >= 0x201U && std_id <= 0x208U) {
     u8 motor_id = (u8)(std_id - 0x200U); // 1 to 8
-    motor_feedback[motor_id - 1].th = (i16)((data[0] << 8) | data[1]);
-    motor_feedback[motor_id - 1].v = (i16)((data[2] << 8) | data[3]);
-    motor_feedback[motor_id - 1].i = (i16)((data[4] << 8) | data[5]);
-    motor_feedback[motor_id - 1].T = data[6];
+    motor_status[motor_id - 1].th = (i16)((data[0] << 8) | data[1]);
+    motor_status[motor_id - 1].v = (i16)((data[2] << 8) | data[3]);
+    motor_status[motor_id - 1].i = (i16)((data[4] << 8) | data[5]);
+    motor_status[motor_id - 1].T = data[6];
   }
 }
 
 // Export the motor module
-const _MotorMod _motor = {.setup = setup_impl,
+const _MotorMod _motor = {.setup = setup_motor,
                           .set = set_current, // Sets target current
                           .status = read_feedback,
-                          .ctrl_daemon = motor_transmit};
+                          .ctrl_sig_daemon = motor_transmit,
+                          .update_status = motor_update_feedback};
 
 // Optional: Public function to get current target (for debugging)
 i16 motor_get_target_current(u8 motor_id) {
