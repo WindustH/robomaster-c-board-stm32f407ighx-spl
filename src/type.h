@@ -5,8 +5,8 @@
 
 #define DMA_BUFFER_SIZE 256
 #define PROC_LIST_SIZE 32
-#define TIM3_PRESCALER 419
-#define TIM3_PERIOD 999
+#define TIM3_PRESCALER 839
+#define TIM3_PERIOD 99
 
 typedef float f32;
 typedef double f64;
@@ -42,20 +42,28 @@ typedef struct {
 
 // CAN Header Types
 typedef struct {
-  uint32_t StdId;       // Standard Identifier
-  uint32_t ExtId;       // Extended Identifier
-  uint32_t IDE;         // Identifier Type
-  uint32_t RTR;         // Remote Transmission Request
-  uint32_t DLC;         // Data Length Code
+  uint32_t StdId;              // Standard Identifier
+  uint32_t ExtId;              // Extended Identifier
+  uint32_t IDE;                // Identifier Type
+  uint32_t RTR;                // Remote Transmission Request
+  uint32_t DLC;                // Data Length Code
   uint32_t TransmitGlobalTime; // Transmit Global Time
-} CAN_TxHeaderTypeDef;
+} canTxH;
 
 typedef struct {
-  uint32_t StdId;       // Standard Identifier
-  uint32_t ExtId;       // Extended Identifier
-  uint32_t IDE;         // Identifier Type
-  uint32_t RTR;         // Remote Transmission Request
-  uint32_t DLC;         // Data Length Code
-  uint32_t FilterMatchIndex;   // Filter Match Index
-  uint32_t Timestamp;   // Timestamp
-} CAN_RxHeaderTypeDef;
+  uint32_t StdId;            // Standard Identifier
+  uint32_t ExtId;            // Extended Identifier
+  uint32_t IDE;              // Identifier Type
+  uint32_t RTR;              // Remote Transmission Request
+  uint32_t DLC;              // Data Length Code
+  uint32_t FilterMatchIndex; // Filter Match Index
+  uint32_t Timestamp;        // Timestamp
+} canRxH;
+
+// Motor feedback structure
+typedef struct {
+  i16 i;  // Actual current
+  i16 v;  // Actual velocity (rpm)
+  i16 th; // Actual position (angle)
+  u8 T;   // Temperature
+} motorFb;

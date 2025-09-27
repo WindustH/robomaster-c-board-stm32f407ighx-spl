@@ -12,6 +12,10 @@ void setup_impl() {
     ;
 
   // 3. Configure the PLL
+  // Clear the register
+  RCC->PLLCFGR &=
+      ~(RCC_PLLCFGR_PLLSRC_Msk | RCC_PLLCFGR_PLLM_Msk | RCC_PLLCFGR_PLLN_Msk |
+        RCC_PLLCFGR_PLLP_Msk | RCC_PLLCFGR_PLLQ_Msk);
   // Set PLL source to HSE, PLLM = 12, PLLN = 336, PLLP = 2, PLLQ = 7
   RCC->PLLCFGR = (RCC_PLLCFGR_PLLSRC_HSE) | (12 << RCC_PLLCFGR_PLLM_Pos) |
                  (336 << RCC_PLLCFGR_PLLN_Pos) |

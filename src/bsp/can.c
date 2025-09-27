@@ -37,17 +37,6 @@ static void setup_impl(void) {
   // Configure other options: normal mode, no auto retransmission
   CAN1->MCR &= ~CAN_MCR_NART;
 
-  // 4. Configure CAN Filter
-  // Enter filter initialization mode
-  CAN1->FMR |= CAN_FMR_FINIT;
-  // Configure filter 0 to accept all messages (mask mode)
-  CAN1->sFilterRegister[0].FR1 = 0x00000000;
-  CAN1->sFilterRegister[0].FR2 = 0x00000000;
-  // Assign filter 0 to FIFO 0
-  CAN1->FA1R |= CAN_FA1R_FACT0;
-  // Activate filter 0
-  CAN1->FMR &= ~CAN_FMR_FINIT;
-
   // 5. Leave initialization mode
   CAN1->MCR &= ~CAN_MCR_INRQ;
   while (CAN1->MSR & CAN_MSR_INAK)
@@ -61,8 +50,7 @@ static void setup_impl(void) {
   NVIC_EnableIRQ(CAN1_RX0_IRQn);
 }
 
-static u8 transmit_impl(CAN_TxHeaderTypeDef *pHeader, u8 aData[],
-                        u32 *pTxMailbox) {
+static u8 transmit_impl(canTxH *pHeader, u8 aData[], u32 *pTxMailbox) {
   // Find an empty mailbox
   u32 txMailbox = (CAN1->TSR & CAN_TSR_CODE) >> CAN_TSR_CODE_Pos;
   if (txMailbox > 2) {
@@ -89,7 +77,7 @@ static u8 transmit_impl(CAN_TxHeaderTypeDef *pHeader, u8 aData[],
   return 0; // Success
 }
 
-static u8 receive_impl(CAN_RxHeaderTypeDef *pHeader, u8 aData[]) {
+static u8 receive_impl(canRxH *pHeader, u8 aData[]) {
   if ((CAN1->RF0R & CAN_RF0R_FMP0) == 0) {
     return 1; // Error, no message pending
   }
@@ -116,12 +104,17 @@ static u8 receive_impl(CAN_RxHeaderTypeDef *pHeader, u8 aData[]) {
   return 0; // Success
 }
 
+// Forward declaration for motor update function
+void motor_update_feedback(canRxH *rx_header, uint8_t *data);
+
 void CAN1_RX0_IRQHandler(void) {
   u8 rxData[8];
-  CAN_RxHeaderTypeDef rxHeader;
+  canRxH rxHeader;
 
   if ((CAN1->RF0R & CAN_RF0R_FMP0) != 0) {
     receive_impl(&rxHeader, rxData);
+    // Update motor feedback if this is a motor message
+    motor_update_feedback(&rxHeader, rxData);
     // Process data (e.g., put it in a queue)
   }
 }

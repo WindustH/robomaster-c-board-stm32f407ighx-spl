@@ -40,7 +40,7 @@ _UartMod _uart = {
     .setup = setup_impl,
 };
 
-void setup_uart_mod() {
+void init_uart_mod() {
   _uart.dma = _uart_dma;
   _uart.it = _uart_it;
 }

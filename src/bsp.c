@@ -1,21 +1,21 @@
 #include "bsp.h"
 
-static void _setup_impl();
+static void _init_impl();
 
 _BspMod bsp = {
-    .setup = _setup_impl,
+    .init = _init_impl,
 };
 
-static void setup_bsp_mod() {
+static void init_bsp_mod() {
   bsp.uart = _uart;
   bsp.led = _led;
   bsp.clock = _clock;
   bsp.cron = _cron;
   bsp.can = _can;
+  bsp.motor = _motor;
 }
 
-static void _setup_impl() {
-  setup_uart_mod();
-  setup_bsp_mod();
-  _can.setup();
+static void _init_impl() {
+  init_uart_mod();
+  init_bsp_mod();
 }

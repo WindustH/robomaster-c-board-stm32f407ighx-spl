@@ -1,5 +1,4 @@
 #pragma once
-#include "stm32f4xx.h"
 #include "type.h"
 
 typedef struct {
@@ -25,7 +24,7 @@ typedef struct {
   _UartItMod it;
 } _UartMod;
 extern _UartMod _uart;
-void setup_uart_mod(void);
+void init_uart_mod(void);
 
 typedef struct {
   void (*setup)();
@@ -47,19 +46,29 @@ extern const _CronMod _cron;
 
 typedef struct {
   void (*setup)(void);
-  u8 (*send)(CAN_TxHeaderTypeDef *pHeader, u8 aData[], u32 *pTxMailbox);
-  u8 (*read)(CAN_RxHeaderTypeDef *pHeader, u8 aData[]);
+  u8 (*send)(canTxH *pHeader, u8 aData[], u32 *pTxMailbox);
+  u8 (*read)(canRxH *pHeader, u8 aData[]);
 } _CanMod;
 
 extern const _CanMod _can;
 
 typedef struct {
-  void (*setup)();
+  void (*setup)(void);
+  u8 (*set)(u8 motor_id, i16 current);
+  u8 (*status)(u8 motor_id, motorFb *feedback);
+  void (*ctrl_daemon)();
+} _MotorMod;
+
+extern const _MotorMod _motor;
+
+typedef struct {
+  void (*init)();
   _UartMod uart;
   _LedMod led;
   _ClockMod clock;
   _CronMod cron;
   _CanMod can;
+  _MotorMod motor;
 } _BspMod;
 
 extern _BspMod bsp;

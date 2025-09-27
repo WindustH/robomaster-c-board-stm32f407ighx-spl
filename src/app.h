@@ -14,7 +14,7 @@ typedef struct {
 extern const _HandleCmdMod _handle_cmd;
 
 typedef struct {
-  void (*setup)();
+  void (*init)();
   _SendbackMod sendback;
   _HandleCmdMod handle_cmd;
 } _AppMod;
