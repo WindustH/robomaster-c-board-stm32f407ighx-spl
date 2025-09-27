@@ -596,6 +596,11 @@
           <GroupName>BSP</GroupName>
           <Files>
             <File>
+              <FileName>can.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\bsp\can.c</FilePath>
+            </File>
+            <File>
               <FileName>clock.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\bsp\clock.c</FilePath>
@@ -604,11 +609,6 @@
               <FileName>cron.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\bsp\cron.c</FilePath>
-            </File>
-            <File>
-              <FileName>cron.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\src\bsp\cron.h</FilePath>
             </File>
             <File>
               <FileName>led.c</FileName>
@@ -626,19 +626,9 @@
               <FilePath>..\src\bsp\uart_dma.c</FilePath>
             </File>
             <File>
-              <FileName>uart_dma.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\src\bsp\uart_dma.h</FilePath>
-            </File>
-            <File>
               <FileName>uart_it.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\bsp\uart_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>uart_it.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\src\bsp\uart_it.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -689,11 +679,6 @@
               <FileName>bsp.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\src\bsp.h</FilePath>
-            </File>
-            <File>
-              <FileName>hal_callbacks.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\hal_callbacks.c</FilePath>
             </File>
             <File>
               <FileName>main.c</FileName>

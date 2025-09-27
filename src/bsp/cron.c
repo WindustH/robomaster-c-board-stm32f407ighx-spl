@@ -1,43 +1,28 @@
 #include "app/cron_job.h"
 #include "bsp.h"
-#include "stm32f4xx_hal.h"
+#include "stm32f4xx.h"
 #include "type.h"
 
-static TIM_HandleTypeDef htim3;
 static volatile procList proc_list = {.state = 0, .procs = {NULL}};
 
 static void setup_impl() {
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  // 1. Enable TIM3 clock
+  RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 
-  htim3.Instance = TIM3;
-  htim3.Init.Prescaler = TIM3_PRESCALER;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = TIM3_PERIOD;
-  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim3) != HAL_OK) {
-    while (1)
-      ;
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK) {
-    while (1)
-      ;
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK) {
-    while (1)
-      ;
-  }
+  // 2. Configure TIM3
+  // Set prescaler and auto-reload period
+  TIM3->PSC = TIM3_PRESCALER;
+  TIM3->ARR = TIM3_PERIOD;
 
-  // Start timer 3 interrupts
-  if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK) {
-    // Error handling
-    while (1)
-      ;
-  }
+  // 3. Enable Update Interrupt
+  TIM3->DIER |= TIM_DIER_UIE;
+
+  // 4. Enable TIM3 interrupt in NVIC
+  NVIC_SetPriority(TIM3_IRQn, 0);
+  NVIC_EnableIRQ(TIM3_IRQn);
+
+  // 5. Enable the timer
+  TIM3->CR1 |= TIM_CR1_CEN;
 }
 
 static u8 add_cron_job(const proc p) {
@@ -70,10 +55,13 @@ const _CronMod _cron = {.setup = setup_impl,
                         .add_job = add_cron_job,
                         .remove_job = remove_cron_job};
 
-void TIM3_IRQHandler() { HAL_TIM_IRQHandler(&htim3); }
+void TIM3_IRQHandler() {
+  // Check if the update interrupt flag is set
+  if (TIM3->SR & TIM_SR_UIF) {
+    // Clear the update interrupt flag
+    TIM3->SR &= ~TIM_SR_UIF;
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-  if (htim->Instance == TIM3) {
+    // Execute cron jobs
     for (u8 i = 0; i < PROC_LIST_SIZE; i++) {
       if ((proc_list.state & (1U << i)) && (proc_list.procs[i] != NULL)) {
         proc_list.procs[i]();

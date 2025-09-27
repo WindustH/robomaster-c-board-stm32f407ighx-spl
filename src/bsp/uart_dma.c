@@ -1,9 +1,6 @@
 #include "bsp.h"
-#include "stm32f4xx_hal.h"
+#include "stm32f4xx.h"
 #include <string.h>
-
-// External UART handle from uart.c
-extern UART_HandleTypeDef huart1;
 
 // DMA transmit buffer for UART data
 static volatile u8 dma_tx_buf[DMA_BUFFER_SIZE];
@@ -12,10 +9,6 @@ static volatile u8 dma_rx_buf[DMA_BUFFER_SIZE];
 // DMA transmit buffer for echo
 static volatile buf *app_rx_buf;
 static volatile u8 tx_in_progress = 0;
-
-// Handle for DMA
-static DMA_HandleTypeDef hdma_usart1_tx;
-static DMA_HandleTypeDef hdma_usart1_rx;
 
 // Init DMA for UART
 // Config both tx and rx streams with appropriate settings
@@ -28,62 +21,58 @@ static void setup_impl(volatile buf *const _app_rx_buf) {
   app_rx_buf = _app_rx_buf;
   app_rx_buf->len = 0;
 
-  // Enable DMA clock
-  __HAL_RCC_DMA2_CLK_ENABLE();
+  // 1. Enable DMA2 clock
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
 
-  // Config DMA for UART TX (stream7, channel4)
-  hdma_usart1_tx.Instance = DMA2_Stream7;
-  hdma_usart1_tx.Init.Channel = DMA_CHANNEL_4;
-  hdma_usart1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
-  hdma_usart1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
-  hdma_usart1_tx.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_usart1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-  hdma_usart1_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-  hdma_usart1_tx.Init.Mode = DMA_NORMAL;
-  hdma_usart1_tx.Init.Priority = DMA_PRIORITY_HIGH;
-  hdma_usart1_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-  if (HAL_DMA_Init(&hdma_usart1_tx) != HAL_OK) {
-    // Error handling
-    while (1)
-      ;
-  }
+  // 2. Configure DMA for UART TX (DMA2, Stream 7, Channel 4)
+  // Disable the stream first
+  DMA2_Stream7->CR &= ~DMA_SxCR_EN;
+  // Wait for EN bit to be cleared
+  while (DMA2_Stream7->CR & DMA_SxCR_EN)
+    ;
+  // Set peripheral port register address
+  DMA2_Stream7->PAR = (u32)&USART1->DR;
+  // Set memory address
+  DMA2_Stream7->M0AR = (u32)dma_tx_buf;
+  // Set number of data items to transfer
+  DMA2_Stream7->NDTR = 0; // Will be set before each transfer
+  // Configure stream: channel 4, memory-to-peripheral, memory increment,
+  // byte data alignment, normal mode, high priority, transfer complete
+  // interrupt
+  DMA2_Stream7->CR = (4 << DMA_SxCR_CHSEL_Pos) | DMA_SxCR_DIR_0 |
+                     DMA_SxCR_MINC | DMA_SxCR_PSIZE_0 | DMA_SxCR_MSIZE_0 |
+                     DMA_SxCR_PL_1 | DMA_SxCR_TCIE;
 
-  // Config DMA for UART RX (stream2, channel4)
-  // Using circular mode for continuous reception
-  hdma_usart1_rx.Instance = DMA2_Stream2;
-  hdma_usart1_rx.Init.Channel = DMA_CHANNEL_4;
-  hdma_usart1_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
-  hdma_usart1_rx.Init.PeriphInc = DMA_PINC_DISABLE;
-  hdma_usart1_rx.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_usart1_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-  hdma_usart1_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-  hdma_usart1_rx.Init.Mode = DMA_CIRCULAR;
-  hdma_usart1_rx.Init.Priority = DMA_PRIORITY_HIGH;
-  hdma_usart1_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-  if (HAL_DMA_Init(&hdma_usart1_rx) != HAL_OK) {
-    // Error handling
-    while (1)
-      ;
-  }
+  // 3. Configure DMA for UART RX (DMA2, Stream 2, Channel 4)
+  // Disable the stream first
+  DMA2_Stream2->CR &= ~DMA_SxCR_EN;
+  // Wait for EN bit to be cleared
+  while (DMA2_Stream2->CR & DMA_SxCR_EN)
+    ;
+  // Set peripheral port register address
+  DMA2_Stream2->PAR = (u32)&USART1->DR;
+  // Set memory address
+  DMA2_Stream2->M0AR = (u32)dma_rx_buf;
+  // Set number of data items to transfer
+  DMA2_Stream2->NDTR = DMA_BUFFER_SIZE;
+  // Configure stream: channel 4, peripheral-to-memory, memory increment,
+  // byte data alignment, circular mode, high priority, half & full transfer
+  // interrupts
+  DMA2_Stream2->CR = (4 << DMA_SxCR_CHSEL_Pos) | DMA_SxCR_MINC |
+                     DMA_SxCR_PSIZE_0 | DMA_SxCR_MSIZE_0 | DMA_SxCR_CIRC |
+                     DMA_SxCR_PL_1 | DMA_SxCR_TCIE | DMA_SxCR_HTIE;
 
-  // Associate DMA handles with UART handle
-  __HAL_LINKDMA(&huart1, hdmatx, hdma_usart1_tx);
-  __HAL_LINKDMA(&huart1, hdmarx, hdma_usart1_rx);
+  // 4. Enable DMA interrupts in NVIC
+  NVIC_SetPriority(DMA2_Stream7_IRQn, 0);
+  NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+  NVIC_SetPriority(DMA2_Stream2_IRQn, 1);
+  NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 
-  // Initialize buffers to zero
-  memset((void *)dma_tx_buf, 0, DMA_BUFFER_SIZE);
-  memset((void *)dma_rx_buf, 0, DMA_BUFFER_SIZE);
+  // 5. Enable DMA mode in UART
+  USART1->CR3 |= USART_CR3_DMAT | USART_CR3_DMAR;
 
-  // Enable transfer complete interrupt for TX
-  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
-
-  // Enable half transfer and transfer complete interrupts for RX
-  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 1);
-  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-
-  // Start DMA reception
-  HAL_UART_Receive_DMA(&huart1, (uint8_t *)dma_rx_buf, DMA_BUFFER_SIZE);
+  // 6. Start DMA reception
+  DMA2_Stream2->CR |= DMA_SxCR_EN;
 }
 
 static void send_dat_impl(const u8 *data, const u16 length) {
@@ -97,7 +86,20 @@ static void send_dat_impl(const u8 *data, const u16 length) {
   tx_in_progress = 1;
 
   memcpy((void *)dma_tx_buf, data, length);
-  HAL_UART_Transmit_DMA(&huart1, (uint8_t *)dma_tx_buf, length);
+
+  // Disable the stream
+  DMA2_Stream7->CR &= ~DMA_SxCR_EN;
+  while (DMA2_Stream7->CR & DMA_SxCR_EN)
+    ;
+
+  // Set data length
+  DMA2_Stream7->NDTR = length;
+
+  // Clear transfer complete flag
+  DMA2->HIFCR = DMA_HIFCR_CTCIF7;
+
+  // Enable the stream
+  DMA2_Stream7->CR |= DMA_SxCR_EN;
 }
 
 static void send_str_impl(const char *str) {
@@ -106,29 +108,40 @@ static void send_str_impl(const char *str) {
     return;
   }
 
-  u16 i;
-  for (i = 0; str[i] != '\0' && i < DMA_BUFFER_SIZE; i++)
-    ;
+  u16 len = strlen(str);
 
   // Only send if string fits in buffer
-  if (i < DMA_BUFFER_SIZE) {
-    send_dat_impl((u8 *)str, i);
+  if (len > 0 && len < DMA_BUFFER_SIZE) {
+    send_dat_impl((u8 *)str, len);
   }
 }
 
 static void save_rx_dat_to_buf() {
   static u16 last_read_pos = 0;
-  u16 current_pos = DMA_BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart1_rx);
+  u16 current_pos = DMA_BUFFER_SIZE - DMA2_Stream2->NDTR;
 
   if (current_pos != last_read_pos) {
-    u16 bytes_to_copy = current_pos - last_read_pos;
+    u16 bytes_to_copy;
+    if (current_pos > last_read_pos) {
+      bytes_to_copy = current_pos - last_read_pos;
+    } else { // Wrap around
+      bytes_to_copy = DMA_BUFFER_SIZE - last_read_pos + current_pos;
+    }
 
     // Check if we have enough space in the app buffer
     if ((app_rx_buf->len + bytes_to_copy) <= DMA_BUFFER_SIZE) {
-      // With ht and tc interrupts, current_pos is always > last_read_pos
-      // no dma buffer wrap-around to handle
-      memcpy((void *)&app_rx_buf->dat[app_rx_buf->len],
-             (void *)&dma_rx_buf[last_read_pos], bytes_to_copy);
+      if (current_pos > last_read_pos) {
+        memcpy((void *)&app_rx_buf->dat[app_rx_buf->len],
+               (void *)&dma_rx_buf[last_read_pos], bytes_to_copy);
+      } else {
+        u16 first_chunk = DMA_BUFFER_SIZE - last_read_pos;
+        memcpy((void *)&app_rx_buf->dat[app_rx_buf->len],
+               (void *)&dma_rx_buf[last_read_pos], first_chunk);
+        app_rx_buf->len += first_chunk;
+        memcpy((void *)&app_rx_buf->dat[app_rx_buf->len], (void *)dma_rx_buf,
+               current_pos);
+        bytes_to_copy = first_chunk + current_pos;
+      }
       app_rx_buf->len += bytes_to_copy;
     }
 
@@ -137,29 +150,19 @@ static void save_rx_dat_to_buf() {
 }
 
 // DMA transmit stream interrupt handler
-// Handles transfer complete interrupt for UART TX
-void DMA2_Stream7_IRQHandler() { HAL_DMA_IRQHandler(&hdma_usart1_tx); }
-
-// DMA receive stream interrupt handler
-// Handles both half transfer and transfer complete interrupts for UART RX
-void DMA2_Stream2_IRQHandler() { HAL_DMA_IRQHandler(&hdma_usart1_rx); }
-
-// Callback for DMA transfer complete
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-  if (huart->Instance == USART1) {
+void DMA2_Stream7_IRQHandler() {
+  if (DMA2->HISR & DMA_HISR_TCIF7) {
+    // Clear transfer complete flag
+    DMA2->HIFCR = DMA_HIFCR_CTCIF7;
     tx_in_progress = 0;
   }
 }
 
-// Callback for DMA half transfer and transfer complete for RX
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-  if (huart->Instance == USART1) {
-    bsp.uart.dma.rxbuf_daemon();
-  }
-}
-
-void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart) {
-  if (huart->Instance == USART1) {
+// DMA receive stream interrupt handler
+void DMA2_Stream2_IRQHandler() {
+  if (DMA2->LISR & (DMA_LISR_TCIF2 | DMA_LISR_HTIF2)) {
+    // Clear flags
+    DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2;
     bsp.uart.dma.rxbuf_daemon();
   }
 }

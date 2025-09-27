@@ -1,5 +1,5 @@
 #pragma once
-#include "stm32f4xx_hal.h"
+#include "stm32f4xx.h"
 #include "type.h"
 
 typedef struct {
@@ -47,9 +47,8 @@ extern const _CronMod _cron;
 
 typedef struct {
   void (*setup)(void);
-  HAL_StatusTypeDef (*send)(CAN_TxHeaderTypeDef *pHeader, u8 aData[],
-                            u32 *pTxMailbox);
-  HAL_StatusTypeDef (*read)(CAN_RxHeaderTypeDef *pHeader, u8 aData[]);
+  u8 (*send)(CAN_TxHeaderTypeDef *pHeader, u8 aData[], u32 *pTxMailbox);
+  u8 (*read)(CAN_RxHeaderTypeDef *pHeader, u8 aData[]);
 } _CanMod;
 
 extern const _CanMod _can;

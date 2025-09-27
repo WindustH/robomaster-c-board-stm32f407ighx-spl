@@ -1,5 +1,4 @@
 #include "bsp.h"
-#include "can.h"
 
 static void _setup_impl();
 

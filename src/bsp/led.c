@@ -1,84 +1,56 @@
 #include "bsp.h"
-#include "stm32f4xx_hal.h"
-
-static TIM_HandleTypeDef htim5;
-
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *timHandle);
+#include "stm32f4xx.h"
 
 static void setup_impl() {
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-  TIM_OC_InitTypeDef sConfigOC = {0};
+  // 1. Enable peripheral clocks
+  RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;  // TIM5 clock
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN; // GPIOH clock
 
-  htim5.Instance = TIM5;
-  htim5.Init.Prescaler = 41;
-  htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim5.Init.Period = 255;
-  htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-  if (HAL_TIM_Base_Init(&htim5) != HAL_OK) {
-    while (1)
-      ;
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim5, &sClockSourceConfig) != HAL_OK) {
-    while (1)
-      ;
-  }
-  if (HAL_TIM_PWM_Init(&htim5) != HAL_OK) {
-    while (1)
-      ;
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig) != HAL_OK) {
-    while (1)
-      ;
-  }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_1) != HAL_OK) {
-    while (1)
-      ;
-  }
-  if (HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_2) != HAL_OK) {
-    while (1)
-      ;
-  }
-  if (HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_3) != HAL_OK) {
-    while (1)
-      ;
-  }
+  // 2. Configure PH10, PH11, PH12 as Alternate Function for TIM5
+  // Clear mode bits for pins 10, 11, 12
+  GPIOH->MODER &=
+      ~(GPIO_MODER_MODER10 | GPIO_MODER_MODER11 | GPIO_MODER_MODER12);
+  // Set mode to Alternate Function (10)
+  GPIOH->MODER |=
+      (GPIO_MODER_MODER10_1 | GPIO_MODER_MODER11_1 | GPIO_MODER_MODER12_1);
+  // Configure output type as Push-Pull
+  GPIOH->OTYPER &= ~(GPIO_OTYPER_OT10 | GPIO_OTYPER_OT11 | GPIO_OTYPER_OT12);
+  // Configure speed as Low
+  GPIOH->OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR10 | GPIO_OSPEEDER_OSPEEDR11 |
+                      GPIO_OSPEEDER_OSPEEDR12);
+  // Configure no pull-up, pull-down
+  GPIOH->PUPDR &=
+      ~(GPIO_PUPDR_PUPDR10 | GPIO_PUPDR_PUPDR11 | GPIO_PUPDR_PUPDR12);
+  // Configure Alternate Function AF2 for TIM5
+  GPIOH->AFR[1] &=
+      ~((0xF << GPIO_AFRH_AFSEL10_Pos) | (0xF << GPIO_AFRH_AFSEL11_Pos) |
+        (0xF << GPIO_AFRH_AFSEL12_Pos));
+  GPIOH->AFR[1] |=
+      ((2 << GPIO_AFRH_AFSEL10_Pos) | (2 << GPIO_AFRH_AFSEL11_Pos) |
+       (2 << GPIO_AFRH_AFSEL12_Pos));
 
-  HAL_TIM_MspPostInit(&htim5);
+  // 3. Configure TIM5 for PWM
+  TIM5->PSC = 41;           // Prescaler
+  TIM5->ARR = 255;          // Auto-reload value
+  TIM5->CR1 = TIM_CR1_ARPE; // Set counter mode to up-counting, enable
+                            // auto-reload preload
 
-  // Start PWM channels
-  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_3);
+  // 4. Configure PWM channels (1, 2, 3)
+  // Channel 1 (PH10) - PWM mode 1, preload enabled
+  TIM5->CCMR1 |= (TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1PE);
+  // Channel 2 (PH11) - PWM mode 1, preload enabled
+  TIM5->CCMR1 |= (TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2PE);
+  // Channel 3 (PH12) - PWM mode 1, preload enabled
+  TIM5->CCMR2 |= (TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3PE);
+
+  // 5. Enable channel outputs
+  TIM5->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E;
+
+  // 6. Enable TIM5 counter
+  TIM5->CR1 |= TIM_CR1_CEN;
 
   // Set initial LED state to off
   bsp.led.show(0x00000000);
-}
-
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *timHandle) {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if (timHandle->Instance == TIM5) {
-    __HAL_RCC_GPIOH_CLK_ENABLE();
-    /**TIM5 GPIO Configuration
-    PH10     ------> TIM5_CH1
-    PH11     ------> TIM5_CH2
-    PH12     ------> TIM5_CH3
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;
-    HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
-  }
 }
 
 static void show_impl(const u32 argb) {
@@ -96,9 +68,9 @@ static void show_impl(const u32 argb) {
   blue = blue * alpha / 255;
 
   // Set timer 5 to output PWM wave
-  __HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_1, blue);
-  __HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_2, green);
-  __HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_3, red);
+  TIM5->CCR1 = blue;
+  TIM5->CCR2 = green;
+  TIM5->CCR3 = red;
 }
 
 const _LedMod _led = {.setup = setup_impl, .show = show_impl};

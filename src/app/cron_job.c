@@ -1,6 +1,5 @@
 #include "app/cron_job.h"
 #include "bsp.h"
-#include "stm32f4xx_hal.h"
 #include "type.h"
 #include "utils/map.h"
 #include <math.h>

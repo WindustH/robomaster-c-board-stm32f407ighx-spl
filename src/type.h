@@ -39,3 +39,23 @@ typedef struct {
   u32 u;
   u32 v;
 } u32v4;
+
+// CAN Header Types
+typedef struct {
+  uint32_t StdId;       // Standard Identifier
+  uint32_t ExtId;       // Extended Identifier
+  uint32_t IDE;         // Identifier Type
+  uint32_t RTR;         // Remote Transmission Request
+  uint32_t DLC;         // Data Length Code
+  uint32_t TransmitGlobalTime; // Transmit Global Time
+} CAN_TxHeaderTypeDef;
+
+typedef struct {
+  uint32_t StdId;       // Standard Identifier
+  uint32_t ExtId;       // Extended Identifier
+  uint32_t IDE;         // Identifier Type
+  uint32_t RTR;         // Remote Transmission Request
+  uint32_t DLC;         // Data Length Code
+  uint32_t FilterMatchIndex;   // Filter Match Index
+  uint32_t Timestamp;   // Timestamp
+} CAN_RxHeaderTypeDef;

@@ -1,47 +1,39 @@
 #include "bsp.h"
-#include "stm32f4xx_hal.h"
-
-UART_HandleTypeDef huart1;
+#include "stm32f4xx.h"
 
 static void setup_impl() {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  // 1. Enable clocks
+  RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 
-  // Enable clocks
-  __HAL_RCC_USART1_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
+  // 2. GPIO Configuration
+  // PA9 (TX)
+  GPIOA->MODER &= ~GPIO_MODER_MODER9;
+  GPIOA->MODER |= GPIO_MODER_MODER9_1;      // Alternate function
+  GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR9; // Very high speed
+  GPIOA->AFR[1] &= ~GPIO_AFRH_AFSEL9;
+  GPIOA->AFR[1] |= (7 << GPIO_AFRH_AFSEL9_Pos); // AF7 for USART1
 
-  // GPIO configuration for USART1 TX (PA9)
-  GPIO_InitStruct.Pin = GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  // PB7 (RX)
+  GPIOB->MODER &= ~GPIO_MODER_MODER7;
+  GPIOB->MODER |= GPIO_MODER_MODER7_1;      // Alternate function
+  GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR7; // Very high speed
+  GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR7;
+  GPIOB->PUPDR |= GPIO_PUPDR_PUPDR7_0; // Pull-up
+  GPIOB->AFR[0] &= ~GPIO_AFRL_AFSEL7;
+  GPIOB->AFR[0] |= (7 << GPIO_AFRL_AFSEL7_Pos); // AF7 for USART1
 
-  // GPIO configuration for USART1 RX (PB7)
-  GPIO_InitStruct.Pin = GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  // 3. UART Configuration
+  // Assuming a 168MHz APB2 clock, for a baud rate of 38400:
+  // USARTDIV = 168,000,000 / (16 * 38400) = 273.4375
+  // DIV_Mantissa = 273
+  // DIV_Fraction = 0.4375 * 16 = 7
+  // BRR value = (273 << 4) | 7 = 0x1117
+  USART1->BRR = 0x1117;
 
-  // UART configuration
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 38400;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-
-  if (HAL_UART_Init(&huart1) != HAL_OK) {
-    // Error handling
-    while (1)
-      ;
-  }
+  // Enable TX, RX, and the UART peripheral
+  USART1->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
 }
 
 _UartMod _uart = {

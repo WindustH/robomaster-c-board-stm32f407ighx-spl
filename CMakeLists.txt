@@ -27,32 +27,15 @@ set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/lib)
 set(DRIVER_DIR ${CMAKE_SOURCE_DIR}/core)
 set(CMSIS_DIR ${DRIVER_DIR}/CMSIS)
-set(HAL_DIR ${DRIVER_DIR}/STM32F4xx_HAL_Driver)
 set(STARTUP_DIR ${CMAKE_SOURCE_DIR}/startup)
 
 # application source files
 file(GLOB_RECURSE APP_SOURCES ${SOURCE_DIR}/*.c)
 
-# hal driver sources
+# driver sources
 set(DRIVER_SOURCES
     # cmsis system files
     ${CMSIS_DIR}/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
-
-    # hal driver sources
-    ${HAL_DIR}/Src/stm32f4xx_hal.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_rcc.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_gpio.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_dma.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_uart.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_tim.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_tim_ex.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_cortex.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_flash.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_flash_ex.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_pwr.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_pwr_ex.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_exti.c
-    ${HAL_DIR}/Src/stm32f4xx_hal_can.c
 )
 
 # assembly startup files
@@ -75,7 +58,6 @@ target_include_directories(${TARGET}
     ${INCLUDE_DIR}
     ${CMSIS_DIR}/Include
     ${CMSIS_DIR}/Device/ST/STM32F4xx/Include
-    ${HAL_DIR}/Inc
 )
 
 # common compiler options
@@ -106,7 +88,6 @@ target_compile_definitions(${TARGET}
     PRIVATE
     STM32F40_41xxx
     ${MCU_DEVICE}
-    USE_HAL_DRIVER
     HSE_VALUE=${HSE_FREQ}
 )
 

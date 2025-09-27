@@ -1,62 +1,128 @@
 #include "bsp.h"
-#include "stm32f4xx_hal.h"
-
-static CAN_HandleTypeDef hcan1;
+#include "stm32f4xx.h"
 
 static void setup_impl(void) {
-  hcan1.Instance = CAN1;
+  // 1. Enable GPIO and CAN1 clocks
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+  RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
 
-  // set to 1mbps
-  hcan1.Init.Prescaler = 3;
-  hcan1.Init.TimeSeg1 = CAN_BS1_12TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
-  hcan1.Init.Mode = CAN_MODE_NORMAL;
-  hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
+  // 2. Configure GPIOD pins 0 (RX) and 1 (TX) for CAN1
+  // Set mode to Alternate Function
+  GPIOD->MODER &= ~(GPIO_MODER_MODER0 | GPIO_MODER_MODER1);
+  GPIOD->MODER |= (GPIO_MODER_MODER0_1 | GPIO_MODER_MODER1_1);
+  // Set output type to Push-Pull
+  GPIOD->OTYPER &= ~(GPIO_OTYPER_OT0 | GPIO_OTYPER_OT1);
+  // Set speed to Very High
+  GPIOD->OSPEEDR |= (GPIO_OSPEEDER_OSPEEDR0 | GPIO_OSPEEDER_OSPEEDR1);
+  // No pull-up, pull-down
+  GPIOD->PUPDR &= ~(GPIO_PUPDR_PUPDR0 | GPIO_PUPDR_PUPDR1);
+  // Set Alternate Function to AF9 (CAN1)
+  GPIOD->AFR[0] &= ~(GPIO_AFRL_AFSEL0 | GPIO_AFRL_AFSEL1);
+  GPIOD->AFR[0] |= (9 << GPIO_AFRL_AFSEL0_Pos) | (9 << GPIO_AFRL_AFSEL1_Pos);
 
-  hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = DISABLE;
-  hcan1.Init.AutoWakeUp = DISABLE;
-  hcan1.Init.AutoRetransmission = DISABLE;
-  hcan1.Init.ReceiveFifoLocked = DISABLE;
-  hcan1.Init.TransmitFifoPriority = DISABLE;
+  // 3. Configure CAN1
+  // Enter initialization mode
+  CAN1->MCR |= CAN_MCR_INRQ;
+  while (!(CAN1->MSR & CAN_MSR_INAK))
+    ;
 
-  // init can
-  if (HAL_CAN_Init(&hcan1) != HAL_OK) {
-    while (1)
-      ;
-  }
+  // Exit sleep mode
+  CAN1->MCR &= ~CAN_MCR_SLEEP;
 
-  // start can
-  if (HAL_CAN_Start(&hcan1) != HAL_OK) {
-    while (1)
-      ;
-  }
+  // Configure bit timing for 1Mbps (assuming 42MHz APB1 clock)
+  // Prescaler = 3, BS1 = 12, BS2 = 1, SJW = 1
+  CAN1->BTR = (0 << CAN_BTR_SJW_Pos) | (11 << CAN_BTR_TS1_Pos) |
+              (0 << CAN_BTR_TS2_Pos) | (2 << CAN_BTR_BRP_Pos);
 
-  // enable interrupt notification
-  if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) !=
-      HAL_OK) {
-    while (1)
-      ;
-  }
+  // Configure other options: normal mode, no auto retransmission
+  CAN1->MCR &= ~CAN_MCR_NART;
+
+  // 4. Configure CAN Filter
+  // Enter filter initialization mode
+  CAN1->FMR |= CAN_FMR_FINIT;
+  // Configure filter 0 to accept all messages (mask mode)
+  CAN1->sFilterRegister[0].FR1 = 0x00000000;
+  CAN1->sFilterRegister[0].FR2 = 0x00000000;
+  // Assign filter 0 to FIFO 0
+  CAN1->FA1R |= CAN_FA1R_FACT0;
+  // Activate filter 0
+  CAN1->FMR &= ~CAN_FMR_FINIT;
+
+  // 5. Leave initialization mode
+  CAN1->MCR &= ~CAN_MCR_INRQ;
+  while (CAN1->MSR & CAN_MSR_INAK)
+    ;
+
+  // 6. Enable FIFO 0 message pending interrupt
+  CAN1->IER |= CAN_IER_FMPIE0;
+
+  // 7. Enable CAN1 RX0 interrupt in NVIC
+  NVIC_SetPriority(CAN1_RX0_IRQn, 1);
+  NVIC_EnableIRQ(CAN1_RX0_IRQn);
 }
 
-static HAL_StatusTypeDef transmit_impl(CAN_TxHeaderTypeDef *pHeader, u8 aData[],
-                                       u32 *pTxMailbox) {
-  return HAL_CAN_AddTxMessage(&hcan1, pHeader, aData, pTxMailbox);
+static u8 transmit_impl(CAN_TxHeaderTypeDef *pHeader, u8 aData[],
+                        u32 *pTxMailbox) {
+  // Find an empty mailbox
+  u32 txMailbox = (CAN1->TSR & CAN_TSR_CODE) >> CAN_TSR_CODE_Pos;
+  if (txMailbox > 2) {
+    return 1; // Error, no empty mailbox
+  }
+  *pTxMailbox = txMailbox;
+
+  // Set up the identifier
+  CAN1->sTxMailBox[txMailbox].TIR =
+      (pHeader->StdId << CAN_TI0R_STID_Pos) | (0 << CAN_TI0R_IDE_Pos);
+  // Set up the DLC
+  CAN1->sTxMailBox[txMailbox].TDTR = pHeader->DLC;
+  // Set up the data
+  CAN1->sTxMailBox[txMailbox].TDLR = ((u32)aData[3] << 24) |
+                                     ((u32)aData[2] << 16) |
+                                     ((u32)aData[1] << 8) | ((u32)aData[0]);
+  CAN1->sTxMailBox[txMailbox].TDHR = ((u32)aData[7] << 24) |
+                                     ((u32)aData[6] << 16) |
+                                     ((u32)aData[5] << 8) | ((u32)aData[4]);
+
+  // Request transmission
+  CAN1->sTxMailBox[txMailbox].TIR |= CAN_TI0R_TXRQ;
+
+  return 0; // Success
 }
 
-static HAL_StatusTypeDef receive_impl(CAN_RxHeaderTypeDef *pHeader,
-                                      u8 aData[]) {
-  return HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, pHeader, aData);
+static u8 receive_impl(CAN_RxHeaderTypeDef *pHeader, u8 aData[]) {
+  if ((CAN1->RF0R & CAN_RF0R_FMP0) == 0) {
+    return 1; // Error, no message pending
+  }
+
+  // Get the identifier
+  pHeader->StdId =
+      (CAN1->sFIFOMailBox[0].RIR & CAN_RI0R_STID) >> CAN_RI0R_STID_Pos;
+  // Get the DLC
+  pHeader->DLC =
+      (CAN1->sFIFOMailBox[0].RDTR & CAN_RDT0R_DLC) >> CAN_RDT0R_DLC_Pos;
+  // Get the data
+  aData[0] = (CAN1->sFIFOMailBox[0].RDLR >> 0) & 0xFF;
+  aData[1] = (CAN1->sFIFOMailBox[0].RDLR >> 8) & 0xFF;
+  aData[2] = (CAN1->sFIFOMailBox[0].RDLR >> 16) & 0xFF;
+  aData[3] = (CAN1->sFIFOMailBox[0].RDLR >> 24) & 0xFF;
+  aData[4] = (CAN1->sFIFOMailBox[0].RDHR >> 0) & 0xFF;
+  aData[5] = (CAN1->sFIFOMailBox[0].RDHR >> 8) & 0xFF;
+  aData[6] = (CAN1->sFIFOMailBox[0].RDHR >> 16) & 0xFF;
+  aData[7] = (CAN1->sFIFOMailBox[0].RDHR >> 24) & 0xFF;
+
+  // Release the FIFO
+  CAN1->RF0R |= CAN_RF0R_RFOM0;
+
+  return 0; // Success
 }
 
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
+void CAN1_RX0_IRQHandler(void) {
   u8 rxData[8];
   CAN_RxHeaderTypeDef rxHeader;
 
-  // 在中断中立即读取，避免 FIFO 溢出
-  if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rxHeader, rxData) == HAL_OK) {
-    // 处理数据（建议只做简单处理，或放入队列）
+  if ((CAN1->RF0R & CAN_RF0R_FMP0) != 0) {
+    receive_impl(&rxHeader, rxData);
+    // Process data (e.g., put it in a queue)
   }
 }
 

@@ -1,25 +1,31 @@
 #include "bsp.h"
-#include "stm32f4xx_hal.h"
+#include "stm32f4xx.h"
 #include "type.h"
-
-// External UART handle from uart.c
-extern UART_HandleTypeDef huart1;
 
 static void setup_impl() {
   // Enable interrupt in NVIC
-  HAL_NVIC_SetPriority(USART1_IRQn, 1, 1);
-  HAL_NVIC_EnableIRQ(USART1_IRQn);
+  NVIC_SetPriority(USART1_IRQn, 1);
+  NVIC_EnableIRQ(USART1_IRQn);
 
   // Enable UART receive interrupt
-  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
+  USART1->CR1 |= USART_CR1_RXNEIE;
 }
 
 static void send_byte_impl(const u8 byte) {
-  HAL_UART_Transmit(&huart1, &byte, 1, HAL_MAX_DELAY);
+  // Wait for transmit buffer to be empty
+  while (!(USART1->SR & USART_SR_TXE))
+    ;
+  // Write data to the data register
+  USART1->DR = byte;
+  // Wait for transmission to complete
+  while (!(USART1->SR & USART_SR_TC))
+    ;
 }
 
 static void send_str_impl(const char *str) {
-  HAL_UART_Transmit(&huart1, (uint8_t *)str, strlen(str), HAL_MAX_DELAY);
+  for (const char *p = str; *p; p++) {
+    send_byte_impl(*p);
+  }
 }
 
 volatile u8 uart_rx_data = 0x00;
@@ -35,7 +41,14 @@ static u8 has_new_byte() {
 
 static u8 read_byte_impl() { return uart_rx_data; }
 
-void USART1_IRQHandler() { HAL_UART_IRQHandler(&huart1); }
+void USART1_IRQHandler() {
+  // Check if the Receive Data Register Not Empty interrupt has occurred
+  if (USART1->SR & USART_SR_RXNE) {
+    // Read the data from the data register (this also clears the RXNE flag)
+    uart_rx_data = (u8)USART1->DR;
+    uart_rx_flag = 1;
+  }
+}
 
 const _UartItMod _uart_it = {
     .setup = setup_impl,

@@ -1,13 +1,11 @@
 #include "app.h"
 #include "app/cron_job.h"
 #include "bsp.h"
-#include "stm32f4xx_hal.h"
+#include "stm32f4xx.h"
 
 // static volatile buf uart_rx_buf;
 
 int main() {
-  // Initialize HAL
-  HAL_Init();
 
   bsp.setup();
   bsp.clock.setup();
