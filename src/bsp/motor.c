@@ -2,7 +2,7 @@
 #include "stm32f4xx.h"
 #include "type.h"
 
-static motorFb motor_status[8] = {0};
+static motStat motor_status[8] = {0};
 static i16 motor_current_targets[8] = {0};
 
 // Setup function - configure CAN filter for motor feedback
@@ -90,13 +90,7 @@ void motor_transmit(void) {
 }
 
 // Read function - read feedback from motor
-static u8 read_feedback(u8 motor_id, motorFb *feedback) {
-  if (motor_id < 1 || motor_id > 8 || feedback == NULL) {
-    return 1; // Invalid parameters
-  }
-  *feedback = motor_status[motor_id - 1];
-  return 0; // Success
-}
+static motStat read_feedback(u8 motor_id) { return motor_status[motor_id]; }
 
 // Function to update motor feedback from CAN messages
 // Call this from CAN RX interrupt handler
@@ -118,7 +112,7 @@ void motor_update_feedback(canRxH *rx_header, u8 *data) {
 const _MotorMod _motor = {.setup = setup_motor,
                           .set = set_current, // Sets target current
                           .status = read_feedback,
-                          .ctrl_sig_daemon = motor_transmit,
+                          .send_ctrl_signal = motor_transmit,
                           .update_status = motor_update_feedback};
 
 // Optional: Public function to get current target (for debugging)

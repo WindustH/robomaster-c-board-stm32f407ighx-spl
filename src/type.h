@@ -1,19 +1,8 @@
 #pragma once
+#include "def.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-
-#define DMA_BUFFER_SIZE 256
-#define PROC_LIST_SIZE 32
-#define SYSCLK 168000000U
-#define APB1_CLK 42000000U
-#define APB2_CLK 84000000U
-#define USART_BAUD_RATE 38400U
-#define TIM3_PRESCALER 839
-#define TIM3_PERIOD 99
-#define MOTOR_CONTROL_ID_1_4 0x200U
-#define MOTOR_CONTROL_ID_5_8 0x1FFU
-#define MOTOR_FEEDBACK_BASE 0x200U
 
 typedef float f32;
 typedef double f64;
@@ -73,4 +62,20 @@ typedef struct {
   i16 v;  // Actual velocity (rpm)
   i16 th; // Actual position (angle)
   u8 T;   // Temperature
-} motorFb;
+} motStat;
+
+typedef enum { PID_POSITION, PID_VELOCITY, PID_CURRENT } pidMode;
+
+typedef struct {
+  f32 kp;           // Proportional gain
+  f32 ki;           // Integral gain
+  f32 kd;           // Derivative gain
+  f32 dt;           // Time step (seconds)
+  f32 output_limit; // Output saturation limit
+  pidMode mode;     // Control mode
+
+  f32 integral;   // Integral accumulator
+  f32 prev_error; // Previous error for derivative
+  f32 target;     // Target value
+  u8 enabled;     // Controller enabled flag
+} pidStat;

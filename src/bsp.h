@@ -6,6 +6,7 @@ typedef struct {
   void (*send_dat)(const u8 *data, const u16 length);
   void (*send_str)(const char *str);
   void (*bind_rx_callback)(void (*cb)(volatile u8 const *dat, const u16 len));
+  void (*unbind_rx_callback)();
 } _UartDmaMod;
 extern const _UartDmaMod _uart_dma;
 
@@ -49,6 +50,7 @@ typedef struct {
   u8 (*send)(canTxH *pHeader, u8 aData[], u32 *pTxMailbox);
   u8 (*read)(canRxH *pHeader, u8 aData[]);
   void (*bind_rx_callback)(void (*cb)(canRxH *rx_header, u8 *data));
+  void (*unbind_rx_callback)();
 } _CanMod;
 
 extern const _CanMod _can;
@@ -56,8 +58,8 @@ extern const _CanMod _can;
 typedef struct {
   void (*setup)(void);
   u8 (*set)(u8 motor_id, i16 current);
-  u8 (*status)(u8 motor_id, motorFb *feedback);
-  void (*ctrl_sig_daemon)();
+  motStat (*status)(u8 motor_id);
+  void (*send_ctrl_signal)();
   void (*update_status)(canRxH *rx_header, u8 *data);
 } _MotorMod;
 

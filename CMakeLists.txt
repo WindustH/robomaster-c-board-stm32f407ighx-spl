@@ -12,7 +12,6 @@ set_target_properties(${TARGET} PROPERTIES SUFFIX ".elf")
 
 # project specific configuration
 set(MCU_DEVICE STM32F407xx)
-set(HSE_FREQ 12000000)
 
 # build configuration
 if(NOT CMAKE_BUILD_TYPE)
@@ -88,7 +87,6 @@ target_compile_definitions(${TARGET}
     PRIVATE
     STM32F40_41xxx
     ${MCU_DEVICE}
-    HSE_VALUE=${HSE_FREQ}
 )
 
 # linker options

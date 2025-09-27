@@ -571,24 +571,9 @@
               <FilePath>..\src\app\cron_job.h</FilePath>
             </File>
             <File>
-              <FileName>uart_handle_cmd.c</FileName>
+              <FileName>pid.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\app\uart_handle_cmd.c</FilePath>
-            </File>
-            <File>
-              <FileName>uart_handle_cmd.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\src\app\uart_handle_cmd.h</FilePath>
-            </File>
-            <File>
-              <FileName>uart_send_back.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\app\uart_send_back.c</FilePath>
-            </File>
-            <File>
-              <FileName>uart_send_back.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\src\app\uart_send_back.h</FilePath>
+              <FilePath>..\src\app\pid.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -684,6 +669,11 @@
               <FileName>bsp.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\src\bsp.h</FilePath>
+            </File>
+            <File>
+              <FileName>def.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\src\def.h</FilePath>
             </File>
             <File>
               <FileName>main.c</FileName>

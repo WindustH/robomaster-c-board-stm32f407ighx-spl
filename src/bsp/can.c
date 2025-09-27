@@ -2,6 +2,7 @@
 #include "stm32f4xx.h"
 
 static void (*proc_can_msg)(canRxH *rx_header, u8 *data);
+static u8 proc_can_msg_func_bound = 0;
 static void setup_can(void) {
   // 1. Enable GPIO and CAN1 clocks
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
@@ -107,7 +108,10 @@ static u8 recv_can_msg(canRxH *pHeader, u8 aData[]) {
 
 static void bind_proc_msg_func(void (*cb)(canRxH *rx_header, u8 *data)) {
   proc_can_msg = cb;
+  proc_can_msg_func_bound = 1;
 }
+
+static void unbind_proc_msg_func() { proc_can_msg_func_bound = 0; }
 
 void CAN1_RX0_IRQHandler(void) {
   u8 rxData[8];
@@ -115,11 +119,13 @@ void CAN1_RX0_IRQHandler(void) {
 
   if ((CAN1->RF0R & CAN_RF0R_FMP0) != 0) {
     bsp.can.read(&rxHeader, rxData);
-    proc_can_msg(&rxHeader, rxData);
+    if (proc_can_msg_func_bound)
+      proc_can_msg(&rxHeader, rxData);
   }
 }
 
 const _CanMod _can = {.setup = setup_can,
                       .send = send_can_msg,
                       .read = recv_can_msg,
-                      .bind_rx_callback = bind_proc_msg_func};
+                      .bind_rx_callback = bind_proc_msg_func,
+                      .unbind_rx_callback = unbind_proc_msg_func};

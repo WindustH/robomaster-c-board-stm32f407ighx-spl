@@ -18,9 +18,9 @@ int main() {
   bsp.can.setup();
   bsp.motor.setup();
   bsp.can.bind_rx_callback(bsp.motor.update_status);
-  bsp.cron.add_job(bsp.motor.ctrl_sig_daemon);
+  bsp.cron.add_job(bsp.motor.send_ctrl_signal);
 
-  // app.setup();
+  app.init();
   // app.sendback.bind_buf(&uart_rx_buf);
   // app.handle_cmd.bind_buf(&uart_rx_buf);
 

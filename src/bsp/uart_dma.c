@@ -10,6 +10,7 @@ static volatile u8 dma_rx_buf[DMA_BUFFER_SIZE];
 static volatile u8 tx_in_progress = 0;
 
 static void (*proc_rx_dat)(volatile u8 const *dat, const u16 len);
+static u8 proc_rx_dat_func_bound = 0;
 
 // Init DMA for UART
 // Config both tx and rx streams with appropriate settings
@@ -111,7 +112,11 @@ static void send_str_impl(const char *str) {
 static void bind_proc_data_func(void (*cb)(volatile u8 const *dat,
                                            const u16 len)) {
   proc_rx_dat = cb;
+  proc_rx_dat_func_bound = 1;
 }
+
+static void unbind_proc_data_func() { proc_rx_dat_func_bound = 0; }
+
 // DMA transmit stream interrupt handler
 void DMA2_Stream7_IRQHandler() {
   if (DMA2->HISR & DMA_HISR_TCIF7) {
@@ -126,11 +131,13 @@ void DMA2_Stream2_IRQHandler() {
   if (DMA2->LISR & (DMA_LISR_TCIF2 | DMA_LISR_HTIF2)) {
     // Clear flags
     DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2;
-    proc_rx_dat(dma_rx_buf, DMA_BUFFER_SIZE - DMA2_Stream2->NDTR);
+    if (proc_rx_dat_func_bound)
+      proc_rx_dat(dma_rx_buf, DMA_BUFFER_SIZE - DMA2_Stream2->NDTR);
   }
 }
 
 const _UartDmaMod _uart_dma = {.send_dat = send_dat_impl,
                                .send_str = send_str_impl,
                                .setup = setup_uart_dma,
-                               .bind_rx_callback = bind_proc_data_func};
+                               .bind_rx_callback = bind_proc_data_func,
+                               .unbind_rx_callback = unbind_proc_data_func};
