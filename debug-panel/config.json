@@ -140,6 +140,42 @@
       }
     },
     {
+      "name": "pid_output_limit",
+      "offset": 140,
+      "type": "FLOAT",
+      "signed": true,
+      "scale": 1.0,
+      "unit": "",
+      "min_val": null,
+      "max_val": null,
+      "writable": false,
+      "graph": {
+        "color": "#aa64ff",
+        "visible": false,
+        "y_min": null,
+        "y_max": null,
+        "title": "PID Output Limit"
+      }
+    },
+    {
+      "name": "pid_mode",
+      "offset": 184,
+      "type": "UINT8",
+      "signed": false,
+      "scale": 1.0,
+      "unit": "",
+      "min_val": null,
+      "max_val": null,
+      "writable": false,
+      "graph": {
+        "color": "#000000",
+        "visible": false,
+        "y_min": null,
+        "y_max": null,
+        "title": null
+      }
+    },
+    {
       "name": "pid_target",
       "offset": 156,
       "type": "FLOAT",
@@ -150,7 +186,7 @@
       "max_val": null,
       "writable": false,
       "graph": {
-        "color": "#aa64ff",
+        "color": "#ffaa64",
         "visible": true,
         "y_min": -1000,
         "y_max": 1000,
@@ -232,14 +268,86 @@
       }
     },
     {
-      "name": "motor_current",
+      "name": "pid_kp",
       "offset": 64,
-      "type": "INT16",
+      "type": "FLOAT",
       "signed": true,
       "scale": 1.0,
-      "unit": "mA",
-      "min_val": -20000,
-      "max_val": 20000,
+      "unit": "",
+      "min_val": 0,
+      "max_val": 10,
+      "writable": true,
+      "graph": {
+        "color": "#000000",
+        "visible": false,
+        "y_min": null,
+        "y_max": null,
+        "title": null
+      }
+    },
+    {
+      "name": "pid_ki",
+      "offset": 96,
+      "type": "FLOAT",
+      "signed": true,
+      "scale": 1.0,
+      "unit": "",
+      "min_val": 0,
+      "max_val": 5,
+      "writable": true,
+      "graph": {
+        "color": "#000000",
+        "visible": false,
+        "y_min": null,
+        "y_max": null,
+        "title": null
+      }
+    },
+    {
+      "name": "pid_kd",
+      "offset": 128,
+      "type": "FLOAT",
+      "signed": true,
+      "scale": 1.0,
+      "unit": "",
+      "min_val": 0,
+      "max_val": 2,
+      "writable": true,
+      "graph": {
+        "color": "#000000",
+        "visible": false,
+        "y_min": null,
+        "y_max": null,
+        "title": null
+      }
+    },
+    {
+      "name": "pid_output_limit",
+      "offset": 160,
+      "type": "FLOAT",
+      "signed": true,
+      "scale": 1.0,
+      "unit": "",
+      "min_val": 0,
+      "max_val": 1000,
+      "writable": true,
+      "graph": {
+        "color": "#000000",
+        "visible": false,
+        "y_min": null,
+        "y_max": null,
+        "title": null
+      }
+    },
+    {
+      "name": "pid_mode",
+      "offset": 192,
+      "type": "UINT8",
+      "signed": false,
+      "scale": 1.0,
+      "unit": "",
+      "min_val": 0,
+      "max_val": 2,
       "writable": true,
       "graph": {
         "color": "#000000",
@@ -251,7 +359,7 @@
     },
     {
       "name": "use_pid_control",
-      "offset": 96,
+      "offset": 224,
       "type": "UINT8",
       "signed": false,
       "scale": 1.0,

@@ -31,7 +31,11 @@ def calculate_offsets(motor_id):
     # Write variable offsets (monitor_write_data)
     write_pid_target_offset = motor_id * 4  # 4 bytes per float
     write_pid_enable_offset = 32 + motor_id  # 1 byte per bool
-    write_motor_current_offset = 64 + (motor_id * 2)  # 2 bytes per int16
+    write_pid_kp_offset = 64 + (motor_id * 4)  # 4 bytes per float
+    write_pid_ki_offset = 96 + (motor_id * 4)  # 4 bytes per float
+    write_pid_kd_offset = 128 + (motor_id * 4)  # 4 bytes per float
+    write_pid_output_limit_offset = 160 + (motor_id * 4)  # 4 bytes per float
+    write_pid_mode_offset = 192 + motor_id  # 1 byte per enum
 
     return {
         'motor_current': motor_base_offset + 0,
@@ -42,12 +46,18 @@ def calculate_offsets(motor_id):
         'pid_kp': pid_base_offset + 0,
         'pid_ki': pid_base_offset + 4,
         'pid_kd': pid_base_offset + 8,
+        'pid_output_limit': pid_base_offset + 12,
+        'pid_mode': pid_base_offset + 56,  # mode is at offset 56 in pidStat
         'pid_target': pid_base_offset + 28,  # target is at offset 28 in pidStat
-        'pid_enabled': pid_base_offset + 56,  # enabled is at offset 56 in pidStat
+        'pid_enabled': pid_base_offset + 60,  # enabled is at offset 60 in pidStat
 
         'write_pid_target': write_pid_target_offset,
         'write_pid_enable': write_pid_enable_offset,
-        'write_motor_current': write_motor_current_offset
+        'write_pid_kp': write_pid_kp_offset,
+        'write_pid_ki': write_pid_ki_offset,
+        'write_pid_kd': write_pid_kd_offset,
+        'write_pid_output_limit': write_pid_output_limit_offset,
+        'write_pid_mode': write_pid_mode_offset
     }
 
 def update_config(motor_id):
@@ -83,7 +93,11 @@ def update_config(motor_id):
     write_mapping = {
         'pid_target': 'write_pid_target',
         'pid_enable': 'write_pid_enable',
-        'motor_current': 'write_motor_current'
+        'pid_kp': 'write_pid_kp',
+        'pid_ki': 'write_pid_ki',
+        'pid_kd': 'write_pid_kd',
+        'pid_output_limit': 'write_pid_output_limit',
+        'pid_mode': 'write_pid_mode'
     }
 
     for var in config['write_variables']:

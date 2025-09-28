@@ -12,14 +12,15 @@
         // "CMakeLists.txt": true,
         "dev.py": true,
         "startup": true,
-        "startup_mdkarm": true,
-        "keil_convertor": true,
+        "startup-mdkarm": true,
+        "keil-convertor": true,
         "core": true,
         "lib": true,
         ".claude": true,
         "hal-template": true,
-        "keil_ver": true,
-        "debug-panel": true
+        "keil-ver": true,
+        "debug-panel": true,
+        "chat-history": true
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "[c]": {

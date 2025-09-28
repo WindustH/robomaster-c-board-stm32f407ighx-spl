@@ -100,8 +100,12 @@ typedef struct {
   // PID enable/disable flags for all 8 motors
   u8 pid_enabled[8];
 
-  // Direct motor current targets (overrides PID)
-  i16 motor_currents[8];
+  // PID parameters for all 8 motors
+  f32 pid_kp[8];
+  f32 pid_ki[8];
+  f32 pid_kd[8];
+  f32 pid_output_limit[8];
+  pidMode pid_mode[8];
 
   // Control flags
   u8 use_pid_control; // 1 = use PID control, 0 = use direct current control

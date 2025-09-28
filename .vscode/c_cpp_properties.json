@@ -2,13 +2,6 @@
     "configurations": [
         {
             "name": "STM32",
-            "includePath": [
-                "${workspaceFolder}/src",
-                "${workspaceFolder}/core/CMSIS/Include",
-                "${workspaceFolder}/core/CMSIS/Device/ST/STM32F4xx/Include",
-                "${workspaceFolder}/core/STM32F4xx_StdPeriph_Driver/inc",
-                "${workspaceFolder}/startup"
-            ],
             "compilerPath": "/usr/bin/arm-none-eabi-gcc",
             "cStandard": "c23",
             "cppStandard": "c++23",

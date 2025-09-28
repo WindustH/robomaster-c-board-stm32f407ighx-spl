@@ -135,10 +135,45 @@ pidStat *pid_get_status(u8 motor_id) {
   return (pidStat *)&pid_controllers[motor_id];
 }
 
+static void set_kp_impl(u8 motor_id, f32 kp) {
+  if (motor_id > 7)
+    return;
+  pid_controllers[motor_id].kp = kp;
+}
+
+static void set_ki_impl(u8 motor_id, f32 ki) {
+  if (motor_id > 7)
+    return;
+  pid_controllers[motor_id].ki = ki;
+}
+
+static void set_kd_impl(u8 motor_id, f32 kd) {
+  if (motor_id > 7)
+    return;
+  pid_controllers[motor_id].kd = kd;
+}
+
+static void set_output_limit_impl(u8 motor_id, f32 output_limit) {
+  if (motor_id > 7)
+    return;
+  pid_controllers[motor_id].output_limit = output_limit;
+}
+
+static void set_mode_impl(u8 motor_id, pidMode mode) {
+  if (motor_id > 7)
+    return;
+  pid_controllers[motor_id].mode = mode;
+}
+
 const _PidMod _pid = {.setup = setup_pid,
                       .update = pid_update,
                       .reset = pid_reset,
                       .enable = pid_enable,
                       .disable = pid_disable,
                       .status = pid_get_status,
-                      .set_target = set_target_impl};
+                      .set_target = set_target_impl,
+                      .set_kp = set_kp_impl,
+                      .set_ki = set_ki_impl,
+                      .set_kd = set_kd_impl,
+                      .set_output_limit = set_output_limit_impl,
+                      .set_mode = set_mode_impl};

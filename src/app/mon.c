@@ -24,6 +24,13 @@ static void update_monitor() {
 
   // Apply write data to system
   for (u8 i = 0; i < 8; i++) {
+    // Apply PID parameter changes
+    app.pid.set_kp(i, monitor_write_data.pid_kp[i]);
+    app.pid.set_ki(i, monitor_write_data.pid_ki[i]);
+    app.pid.set_kd(i, monitor_write_data.pid_kd[i]);
+    app.pid.set_output_limit(i, monitor_write_data.pid_output_limit[i]);
+    app.pid.set_mode(i, monitor_write_data.pid_mode[i]);
+
     if (monitor_write_data.use_pid_control) {
       // Use PID control
       if (monitor_write_data.pid_enabled[i]) {
@@ -33,9 +40,8 @@ static void update_monitor() {
         app.pid.disable(i);
       }
     } else {
-      // Use direct current control
+      // Disable PID control
       app.pid.disable(i);
-      bsp.motor.set(i, monitor_write_data.motor_currents[i]);
     }
   }
 }

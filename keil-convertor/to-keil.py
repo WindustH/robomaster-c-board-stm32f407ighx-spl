@@ -13,7 +13,7 @@ UVOPTX_TEMPLATE = "template.uvoptx"
 PROJECT_ROOT = ".."
 
 # Directory to store the generated Keil project files
-KEIL_PROJECT_DIR = "../keil_ver"
+KEIL_PROJECT_DIR = "../keil-ver"
 
 # Output Keil project name
 OUTPUT_PROJECT_NAME = "keil_stm32f407ighx"
@@ -22,7 +22,7 @@ OUTPUT_PROJECT_NAME = "keil_stm32f407ighx"
 TARGET_DEVICE = "STM32F407IGHx"
 
 # Preprocessor definitions to add
-DEFINES = ["HSE_VALUE=12000000U"]
+DEFINES = []
 
 # Files to exclude from the project
 EXCLUDE_FILES = [
@@ -32,21 +32,22 @@ EXCLUDE_FILES = [
 
 # Define the mapping from your filesystem structure to Keil Groups
 GROUP_CONFIG = [
-    ("CORE", ["./core/CMSIS", "./startup_mdkarm"], [".c", ".h", ".s"], True),
-    ("FWLIB", ["./core/STM32F4xx_StdPeriph_Driver"], [".c", ".h"], True),
+    ("CORE", ["./core/CMSIS", "./startup-mdkarm"], [".c", ".h", ".s"], True),
     ("APP", ["./src/app"], [".c", ".h"], False),
     ("BSP", ["./src/bsp"], [".c", ".h"], False),
     ("UTILS", ["./src/utils"], [".c", ".h"], False),
+    ("MOD", ["./src/mod"], [".c", ".h"], False),
+    ("ERR", ["./src/err"], [".c", ".h"], False),
     ("USER", ["./src"], [".c", ".h"], False),  # Main files like main.c, it.c
 ]
 
-INCLUDE_CONFIG=[
+INCLUDE_CONFIG = [
     "./src",
     "./lib",
     "./core/CMSIS/Device/ST/STM32F4xx/Include",
     "./core/CMSIS/Include",
-    "./core/STM32F4xx_StdPeriph_Driver/inc"
 ]
+
 
 # --- Helper Functions ---
 def prettify_xml(elem):
@@ -247,7 +248,7 @@ def main():
     # Set file permissions for cross-platform compatibility
     try:
         os.chmod(output_uvprojx, 0o666)  # rw-rw-rw- for Windows compatibility
-        os.chmod(output_uvoptx, 0o666)   # rw-rw-rw- for Windows compatibility
+        os.chmod(output_uvoptx, 0o666)  # rw-rw-rw- for Windows compatibility
     except OSError:
         # If chmod fails (e.g., on Windows), just continue
         pass

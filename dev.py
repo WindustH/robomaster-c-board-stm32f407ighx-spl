@@ -189,7 +189,7 @@ class ProjectManager:
     def _run_keil_converter(self):
         """Run the Keil converter script to generate Keil project files."""
         print_header("Generating Keil Project Files")
-        keil_converter_path = self.project_dir / "keil_convertor" / "to_keil.py"
+        keil_converter_path = self.project_dir / "keil-convertor" / "to-keil.py"
 
         if not keil_converter_path.exists():
             print_status(f"Keil converter script not found at {keil_converter_path}", "warning")

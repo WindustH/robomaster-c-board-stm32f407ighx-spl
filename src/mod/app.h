@@ -9,6 +9,11 @@ typedef struct {
   void (*enable)(u8 motor_id);
   void (*disable)(u8 motor_id);
   void (*set_target)(u8 motor_id, f32 target);
+  void (*set_kp)(u8 motor_id, f32 kp);
+  void (*set_ki)(u8 motor_id, f32 ki);
+  void (*set_kd)(u8 motor_id, f32 kd);
+  void (*set_output_limit)(u8 motor_id, f32 output_limit);
+  void (*set_mode)(u8 motor_id, pidMode mode);
   pidStat *(*status)(u8 motor_id);
 } _PidMod;
 extern const _PidMod _pid;

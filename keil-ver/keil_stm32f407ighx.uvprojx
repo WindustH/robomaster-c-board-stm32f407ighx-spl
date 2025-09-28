@@ -550,11 +550,6 @@
               <FileType>5</FileType>
               <FilePath>..\core\CMSIS\Include\tz_context.h</FilePath>
             </File>
-            <File>
-              <FileName>startup_stm32f407xx.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>..\startup_mdkarm\startup_stm32f407xx.s</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -571,9 +566,9 @@
               <FilePath>..\src\app\pid.c</FilePath>
             </File>
             <File>
-              <FileName>time.c</FileName>
+              <FileName>tick.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\app\time.c</FilePath>
+              <FilePath>..\src\app\tick.c</FilePath>
             </File>
           </Files>
         </Group>

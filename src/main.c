@@ -31,8 +31,8 @@ int main() {
   bsp.led.show(0xffffffff);
 
   bsp.cron.add_job(app.tick.update);
-  bsp.cron.add_job(app.mon.update);
   bsp.cron.add_job(bsp.motor.send_ctrl_signal);
+  bsp.cron.add_job(app.mon.update);
 
   // Main loop
   while (true) {
