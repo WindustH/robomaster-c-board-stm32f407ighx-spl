@@ -3,3 +3,4 @@ __pycache__/
 .cache/
 hal-template/
 keil_ver/
+chat-history/
