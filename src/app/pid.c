@@ -1,62 +1,56 @@
-#include "app.h"
-#include "bsp.h"
+#include "mod/app.h"
+#include "mod/bsp.h"
 #include <string.h>
 
-static pidStat pid_controllers[8] = {0};
+static volatile pidStat pid_controllers[8] = {0};
 
-static void setup_pid(u8 motor_id, f32 kp, f32 ki, f32 kd, f32 dt,
-                      f32 output_limit, pidMode mode) {
+static void setup_pid(const u8 motor_id, const f32 kp, const f32 ki,
+                      const f32 kd, const f32 dt, f32 output_limit,
+                      pidMode mode) {
   if (motor_id > 7)
     return;
 
-  pidStat *pid = &pid_controllers[motor_id];
+  pid_controllers[motor_id].kp = kp;
+  pid_controllers[motor_id].ki = ki;
+  pid_controllers[motor_id].kd = kd;
+  pid_controllers[motor_id].dt = dt;
+  pid_controllers[motor_id].output_limit = output_limit;
+  pid_controllers[motor_id].mode = mode;
 
-  pid->kp = kp;
-  pid->ki = ki;
-  pid->kd = kd;
-  pid->dt = dt;
-  pid->output_limit = output_limit;
-  pid->mode = mode;
-
-  pid->integral = 0.0f;
-  pid->prev_error = 0.0f;
-  pid->target = 0.0f;
-  pid->enabled = 0;
+  pid_controllers[motor_id].integral = 0.0f;
+  pid_controllers[motor_id].prev_error = 0.0f;
+  pid_controllers[motor_id].target = 0.0f;
+  pid_controllers[motor_id].enabled = 0;
 }
 
 static void set_target_impl(u8 motor_id, f32 target) {
   if (motor_id > 7)
     return;
-
-  pidStat *pid = &pid_controllers[motor_id];
-  pid->target = target;
+  pid_controllers[motor_id].target = target;
 }
 
 static void pid_enable(u8 motor_id) {
   if (motor_id > 7)
     return;
 
-  pidStat *pid = &pid_controllers[motor_id];
-  pid->enabled = 1;
+  pid_controllers[motor_id].enabled = 1;
 
   // Reset integral and previous error when enabling
-  pid->integral = 0.0f;
-  pid->prev_error = 0.0f;
+  pid_controllers[motor_id].integral = 0.0f;
+  pid_controllers[motor_id].prev_error = 0.0f;
 }
 
 static void pid_disable(u8 motor_id) {
   if (motor_id > 7)
     return;
-
-  pidStat *pid = &pid_controllers[motor_id];
-  pid->enabled = 0;
+  pid_controllers[motor_id].enabled = 0;
 }
 
 static f32 pid_compute(u8 motor_id) {
   if (motor_id > 7)
     return 0.0f;
 
-  pidStat *pid = &pid_controllers[motor_id];
+  volatile pidStat *pid = &pid_controllers[motor_id];
   if (!pid->enabled)
     return 0.0f;
 
@@ -114,8 +108,7 @@ static void pid_update(u8 motor_id) {
   if (motor_id > 7)
     return;
 
-  pidStat *pid = &pid_controllers[motor_id];
-  if (!pid->enabled)
+  if (!pid_controllers[motor_id].enabled)
     return;
 
   f32 output = pid_compute(motor_id);
@@ -131,9 +124,15 @@ static void pid_reset(u8 motor_id) {
   if (motor_id > 7)
     return;
 
-  pidStat *pid = &pid_controllers[motor_id];
-  pid->integral = 0.0f;
-  pid->prev_error = 0.0f;
+  pid_controllers[motor_id].integral = 0.0f;
+  pid_controllers[motor_id].prev_error = 0.0f;
+}
+
+// Function to get PID status for monitoring
+pidStat *pid_get_status(u8 motor_id) {
+  if (motor_id > 7)
+    return NULL;
+  return (pidStat *)&pid_controllers[motor_id];
 }
 
 const _PidMod _pid = {.setup = setup_pid,
@@ -141,4 +140,5 @@ const _PidMod _pid = {.setup = setup_pid,
                       .reset = pid_reset,
                       .enable = pid_enable,
                       .disable = pid_disable,
+                      .status = pid_get_status,
                       .set_target = set_target_impl};

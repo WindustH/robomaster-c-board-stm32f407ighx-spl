@@ -79,3 +79,30 @@ typedef struct {
   f32 target;     // Target value
   u8 enabled;     // Controller enabled flag
 } pidStat;
+
+// Monitor read structure - all data we want to read from the system
+typedef struct {
+  // Motor status for all 8 motors
+  motStat motors[8];
+
+  // PID status for all 8 motors
+  pidStat pids[8];
+
+  // System timestamp
+  u32 timestamp;
+} monitor_read_t;
+
+// Monitor write structure - all data we want to write to the system
+typedef struct {
+  // PID target values for all 8 motors
+  f32 pid_targets[8];
+
+  // PID enable/disable flags for all 8 motors
+  u8 pid_enabled[8];
+
+  // Direct motor current targets (overrides PID)
+  i16 motor_currents[8];
+
+  // Control flags
+  u8 use_pid_control; // 1 = use PID control, 0 = use direct current control
+} monitor_write_t;

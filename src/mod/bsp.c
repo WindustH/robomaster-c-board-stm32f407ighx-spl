@@ -1,4 +1,4 @@
-#include "bsp.h"
+#include "mod/bsp.h"
 
 static void _init_impl();
 

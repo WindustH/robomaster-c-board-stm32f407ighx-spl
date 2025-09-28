@@ -561,19 +561,19 @@
           <GroupName>APP</GroupName>
           <Files>
             <File>
-              <FileName>cron_job.c</FileName>
+              <FileName>mon.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\app\cron_job.c</FilePath>
-            </File>
-            <File>
-              <FileName>cron_job.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\src\app\cron_job.h</FilePath>
+              <FilePath>..\src\app\mon.c</FilePath>
             </File>
             <File>
               <FileName>pid.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\app\pid.c</FilePath>
+            </File>
+            <File>
+              <FileName>time.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\app\time.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -650,26 +650,6 @@
         <Group>
           <GroupName>USER</GroupName>
           <Files>
-            <File>
-              <FileName>app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\app.c</FilePath>
-            </File>
-            <File>
-              <FileName>app.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\src\app.h</FilePath>
-            </File>
-            <File>
-              <FileName>bsp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\bsp.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\src\bsp.h</FilePath>
-            </File>
             <File>
               <FileName>def.h</FileName>
               <FileType>5</FileType>

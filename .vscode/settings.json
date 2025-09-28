@@ -19,6 +19,7 @@
         ".claude": true,
         "hal-template": true,
         "keil_ver": true,
+        "debug-panel": true
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "[c]": {
@@ -27,11 +28,15 @@
     "editor.formatOnSave": true,
     "VsCodeTaskButtons.tasks": [
         {
-            "label": "$(play) build",
-            "task": "build",
+            "label": "$(pass-filled) Build (Release)",
+            "task": "build-release",
         },
         {
-            "label": "$(arrow-down) flash",
+            "label": "$(debug-console) Build (Debug)",
+            "task": "build-debug",
+        },
+        {
+            "label": "$(cloud-download) Flash",
             "task": "flash",
         }
     ]

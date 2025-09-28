@@ -121,7 +121,7 @@ class ProjectManager:
             # Run lsusb to detect connected devices
             result = subprocess.run(["lsusb"], capture_output=True, text=True, check=True)
             lsusb_output = result.stdout
-            
+
             # Check for specific device IDs, similar to dev.sh
             if "0483:3748" in lsusb_output:
                 print_status("Detected ST-Link v2", "success")
@@ -327,6 +327,14 @@ def main():
     )
     build_parser.add_argument("--build-dir", default="build", help="Build directory")
 
+    # Build-release command
+    build_release_parser = subparsers.add_parser("build-release", help="Build in Release mode")
+    build_release_parser.add_argument("--build-dir", default="build", help="Build directory")
+
+    # Build-debug command
+    build_debug_parser = subparsers.add_parser("build-debug", help="Build in Debug mode")
+    build_debug_parser.add_argument("--build-dir", default="build", help="Build directory")
+
     # Flash command
     flash_parser = subparsers.add_parser("flash", help="Flash the device")
     flash_parser.add_argument(
@@ -364,6 +372,10 @@ def main():
                     else ("Release" if args.release else DEFAULT_BUILD_TYPE)
                 )
                 manager.build(build_type)
+            elif args.command == "build-release":
+                manager.build("Release")
+            elif args.command == "build-debug":
+                manager.build("Debug")
             elif args.command == "flash":
                 manager.flash(args.interface)
             elif args.command == "debug":

@@ -1,4 +1,4 @@
-#include "bsp.h"
+#include "mod/bsp.h"
 #include "stm32f4xx.h"
 
 static void (*proc_can_msg)(canRxH *rx_header, u8 *data);

@@ -1,6 +1,10 @@
-#include "bsp.h"
+#include "mod/bsp.h"
 #include "stm32f4xx.h"
 #include "type.h"
+
+#define MOTOR_CONTROL_ID_1_4 0x200U
+#define MOTOR_CONTROL_ID_5_8 0x1FFU
+#define MOTOR_FEEDBACK_BASE 0x200U
 
 static motStat motor_status[8] = {0};
 static i16 motor_current_targets[8] = {0};
@@ -114,10 +118,3 @@ const _MotorMod _motor = {.setup = setup_motor,
                           .status = read_feedback,
                           .send_ctrl_signal = motor_transmit,
                           .update_status = motor_update_feedback};
-
-// Optional: Public function to get current target (for debugging)
-i16 motor_get_target_current(u8 motor_id) {
-  if (motor_id < 1 || motor_id > 8)
-    return 0;
-  return motor_current_targets[motor_id - 1];
-}

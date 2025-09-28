@@ -1,0 +1,8 @@
+{
+  "read_struct_name": "monitor_read",
+  "write_struct_name": "monitor_write",
+  "openocd_host": "localhost",
+  "openocd_port": 4444,
+  "update_interval_ms": 100,
+  "graph_history_size": 1000
+}
