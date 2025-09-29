@@ -468,11 +468,29 @@ python main.py
 
 #### GUI Module (`modules/gui.py`)
 - **MotorMonitorGUI**: Main GUI class for debug panel
-- Real-time data display and control interface
-- Graph plotting for motor parameters with configurable time window
-- PID parameter tuning interface
+- Orchestrates all UI components and handles application lifecycle
+- **ExpandedGraphWindow**: Clickable graph titles open expanded view
+- Larger individual graph windows for detailed analysis
+- Independent time window and auto-zoom controls per expanded graph
+
+#### Connection Panel Module (`modules/connection_panel.py`)
+- **ConnectionPanel**: Handles OpenOCD connection settings and motor selection
+- Connection status display and management
+- Motor selection interface (0-7)
+- Configuration loading and saving
+
+#### Graph Panel Module (`modules/graph_panel.py`)
+- **GraphPanel**: Real-time data visualization and plotting
 - Configurable time window display (0.1-3600 seconds)
 - Y-axis only auto-fit functionality
+- Clickable graph titles for expanded views
+- Data history management and filtering
+
+#### Control Panel Module (`modules/control_panel.py`)
+- **ControlPanel**: Variable writing and control interface
+- Dynamic control creation based on variable types
+- Write value validation and application
+- Scrollable interface for multiple controls
 
 #### Data Monitor Module (`modules/data_monitor.py`)
 - **DataMonitor**: Handles data acquisition and processing
