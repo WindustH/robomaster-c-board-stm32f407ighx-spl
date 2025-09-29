@@ -6,8 +6,8 @@
 #define MOTOR_CONTROL_ID_5_8 0x1FFU
 #define MOTOR_FEEDBACK_BASE 0x200U
 
-static motStat motor_status[8] = {0};
-static i16 motor_current_targets[8] = {0};
+static volatile motStat motor_status[8] = {0};
+static volatile i16 motor_current_targets[8] = {0};
 
 // Setup function - configure CAN filter for motor feedback
 static void setup_motor(void) {
@@ -44,10 +44,10 @@ static void setup_motor(void) {
 
 // Set target current for a specific motor (non-blocking, just update target)
 static u8 set_current(u8 motor_id, i16 current) {
-  if (motor_id < 1 || motor_id > 8) {
+  if (motor_id > 7) {
     return 1; // Invalid motor ID
   }
-  motor_current_targets[motor_id - 1] = current;
+  motor_current_targets[motor_id] = current;
   return 0; // Success
 }
 
@@ -99,16 +99,22 @@ static motStat read_feedback(u8 motor_id) { return motor_status[motor_id]; }
 // Function to update motor feedback from CAN messages
 // Call this from CAN RX interrupt handler
 void motor_update_feedback(canRxH *rx_header, u8 *data) {
-  if (rx_header == NULL || data == NULL)
-    return;
 
   u32 std_id = rx_header->StdId;
   if (std_id >= 0x201U && std_id <= 0x208U) {
-    u8 motor_id = (u8)(std_id - 0x200U); // 1 to 8
-    motor_status[motor_id - 1].th = (i16)((data[0] << 8) | data[1]);
-    motor_status[motor_id - 1].v = (i16)((data[2] << 8) | data[3]);
-    motor_status[motor_id - 1].i = (i16)((data[4] << 8) | data[5]);
-    motor_status[motor_id - 1].T = data[6];
+    u8 motor_id = (u8)(std_id - 0x200U) - 1; // 1 to 8
+
+    // Parse feedback data according to protocol:
+    // DATA[0-1]: Rotor mechanical angle (0-8191 for 0-360°)
+    // DATA[2-3]: Rotational speed (RPM)
+    // DATA[4-5]: Actual torque current
+    // DATA[6]: Motor temperature (°C)
+    // DATA[7]: Null
+
+    motor_status[motor_id].th = (i16)((data[0] << 8) | data[1]);
+    motor_status[motor_id].v = (i16)((data[2] << 8) | data[3]);
+    motor_status[motor_id].i = (i16)((data[4] << 8) | data[5]);
+    motor_status[motor_id].T = data[6];
   }
 }
 

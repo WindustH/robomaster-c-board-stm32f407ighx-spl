@@ -469,8 +469,10 @@ python main.py
 #### GUI Module (`modules/gui.py`)
 - **MotorMonitorGUI**: Main GUI class for debug panel
 - Real-time data display and control interface
-- Graph plotting for motor parameters
+- Graph plotting for motor parameters with configurable time window
 - PID parameter tuning interface
+- Configurable time window display (0.1-3600 seconds)
+- Y-axis only auto-fit functionality
 
 #### Data Monitor Module (`modules/data_monitor.py`)
 - **DataMonitor**: Handles data acquisition and processing
@@ -519,32 +521,20 @@ python main.py
 # 4. Begin real-time monitoring of configured variables
 ```
 
-### Motor Configuration Tool (`change_motor.py`)
+### Motor Selection in Debug Panel
 
-Helper script to easily change which motor to monitor in the debug panel:
-
-```bash
-# Change monitored motor
-cd debug-panel
-python change_motor.py <motor_id>
-
-# Examples
-python change_motor.py 0    # Monitor motor 0
-python change_motor.py 3    # Monitor motor 3
-python change_motor.py 7    # Monitor motor 7
-```
-
-**What This Does:**
-- Updates `config.json` with the correct memory offsets for the selected motor
-- Updates graph titles to show the correct motor number
-- Sets the `motor_to_monitor` field in the config
-- All changes are automatically applied to the debug panel
+The debug panel now includes built-in motor selection functionality:
 
 **Features:**
-- Automatically calculates memory offsets for specified motor
-- Updates config.json with new motor monitoring configuration
-- Updates graph titles to reflect current motor
-- Handles all motor-related variables (current, velocity, position, temperature, PID parameters)
+- Motor selection spin box (0-7) in the GUI connection panel
+- Real-time address calculation using base addresses from config
+- Automatic graph title updates when motor changes
+- Default motor set to 1
+
+**How It Works:**
+- Base addresses for motor status, PID status, and write variables are stored in `motor_base_address`
+- When motor is changed, offsets are calculated as: `base_address + (motor_id * structure_size)`
+- All variable offsets and graph titles are automatically updated
 
 **Structure Layout:**
 The monitor module exposes:
@@ -552,35 +542,20 @@ The monitor module exposes:
 - **PID status**: KP, KI, KD, target, enabled flags for all 8 motors
 - **Control**: PID targets, enable flags, direct current control
 
-The script automatically calculates the correct memory offsets based on the structure sizes:
+**Structure Sizes:**
 - `motStat`: 8 bytes per motor
 - `pidStat`: 28 bytes per motor
 
-**What it updates:**
-- `motor_to_monitor` configuration field
-- Memory offsets for all motor-related variables
-- Graph titles to show current motor number
-- PID parameter offsets for read/write operations
+**Usage:**
+1. Run the debug panel: `cd debug-panel && python main.py`
+2. Use the motor selection spin box (0-7) to choose which motor to monitor
+3. Click "Apply Motor" to switch monitoring to that motor
+4. All graphs and data monitoring will automatically update
 
-**Usage Example:**
-```bash
-cd debug-panel
-python change_motor.py 2
-# Output:
-# ✓ Successfully updated config.json to monitor motor 2
-# Updated offsets:
-#   motor_current: 16
-#   motor_velocity: 18
-#   motor_position: 20
-#   motor_temperature: 22
-#   ...
-```
-
-**Notes:**
-- Motor IDs are 0-indexed (0 = motor 1, 1 = motor 2, etc.)
-- The system supports monitoring all 8 motors simultaneously
-- The debug panel focuses on one motor for easier visualization
-- You can switch motors at any time without restarting the debug panel
+**Configuration:**
+- `motor_base_address` in config.json stores all base offsets
+- Default motor is set to 1
+- No need to manually edit offsets - everything is calculated automatically
 
 ### Archive Tool (`archive.py`)
 

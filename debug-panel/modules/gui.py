@@ -58,6 +58,14 @@ class MotorMonitorGUI(QMainWindow):
         self.status_label = QLabel("Disconnected")
         self.save_config_btn = QPushButton("Save Config")
 
+        # Motor selection
+        self.motor_select = QSpinBox()
+        self.motor_select.setRange(0, 7)
+        self.motor_select.setValue(1)
+        self.motor_select.setToolTip("Select motor to monitor (0-7)")
+        self.motor_apply_btn = QPushButton("Apply Motor")
+        self.motor_status_label = QLabel("Motor 1")
+
         conn_layout.addWidget(QLabel("Host:"), 0, 0)
         conn_layout.addWidget(self.host_edit, 0, 1)
         conn_layout.addWidget(QLabel("Port:"), 0, 2)
@@ -67,9 +75,13 @@ class MotorMonitorGUI(QMainWindow):
         conn_layout.addWidget(QLabel("OpenOCD Config:"), 2, 0)
         conn_layout.addWidget(self.openocd_config_edit, 2, 1)
         conn_layout.addWidget(self.auto_start_cb, 2, 2, 1, 2)
-        conn_layout.addWidget(self.connect_btn, 3, 0)
-        conn_layout.addWidget(self.save_config_btn, 3, 1)
-        conn_layout.addWidget(self.status_label, 3, 2, 1, 2)
+        conn_layout.addWidget(QLabel("Motor:"), 3, 0)
+        conn_layout.addWidget(self.motor_select, 3, 1)
+        conn_layout.addWidget(self.motor_apply_btn, 3, 2)
+        conn_layout.addWidget(self.motor_status_label, 3, 3)
+        conn_layout.addWidget(self.connect_btn, 4, 0)
+        conn_layout.addWidget(self.save_config_btn, 4, 1)
+        conn_layout.addWidget(self.status_label, 4, 2, 1, 2)
 
         main_layout.addWidget(conn_group)
 
@@ -91,25 +103,41 @@ class MotorMonitorGUI(QMainWindow):
         self.map_file_edit.setText(self.config.map_file)
         self.openocd_config_edit.setText(self.config.openocd_config_file or "")
         self.auto_start_cb.setChecked(self.config.auto_start_openocd)
+        self.motor_select.setValue(self.config.motor_to_monitor)
+        self.motor_status_label.setText(f"Motor {self.config.motor_to_monitor}")
+        self.time_window_spin.setValue(self.config.time_window_seconds)
 
     def create_graph_widget(self):
         graph_group = QGroupBox("Real-time Data")
         layout = QVBoxLayout(graph_group)
 
         controls_layout = QHBoxLayout()
-        self.auto_zoom_cb = QCheckBox("Auto Zoom")
+        self.auto_zoom_cb = QCheckBox("Auto Zoom Y")
         self.auto_zoom_cb.setChecked(True)
         self.clear_btn = QPushButton("Clear History")
+
+        # Time window controls
+        controls_layout.addWidget(QLabel("Time Window:"))
+        self.time_window_spin = QDoubleSpinBox()
+        self.time_window_spin.setRange(0.1, 3600.0)
+        self.time_window_spin.setValue(10.0)
+        self.time_window_spin.setSuffix(" s")
+        self.time_window_spin.setDecimals(1)
+        self.time_window_spin.setToolTip("Time window to display (seconds)")
+
         controls_layout.addWidget(self.auto_zoom_cb)
         controls_layout.addWidget(self.clear_btn)
+        controls_layout.addWidget(QLabel("Window:"))
+        controls_layout.addWidget(self.time_window_spin)
         controls_layout.addStretch()
         layout.addLayout(controls_layout)
 
         self.plot_widget = pg.GraphicsLayoutWidget()
         layout.addWidget(self.plot_widget)
 
-        # Create plots for each read variable
-        for i, var in enumerate(self.config.read_variables):
+        # Create plots for each read variable that is visible
+        visible_vars = [var for var in self.config.read_variables if var.graph.visible]
+        for i, var in enumerate(visible_vars):
             title = var.graph.title or f"{var.name} ({var.unit})"
             plot = self.plot_widget.addPlot(row=i//2, col=i%2, title=title)
             plot.setLabel('left', var.name, units=var.unit)
@@ -180,6 +208,7 @@ class MotorMonitorGUI(QMainWindow):
         self.connect_btn.clicked.connect(self.toggle_connection)
         self.clear_btn.clicked.connect(self.clear_history)
         self.save_config_btn.clicked.connect(self.save_current_config)
+        self.motor_apply_btn.clicked.connect(self.change_motor)
         self.monitor.data_updated.connect(self.update_graphs)
         self.monitor.connection_status.connect(self.update_connection_status)
 
@@ -189,6 +218,7 @@ class MotorMonitorGUI(QMainWindow):
         self.config.map_file = self.map_file_edit.text()
         self.config.openocd_config_file = self.openocd_config_edit.text() or None
         self.config.auto_start_openocd = self.auto_start_cb.isChecked()
+        self.config.time_window_seconds = self.time_window_spin.value()
         self.config.save_config()
         QMessageBox.information(self, "Saved", "Configuration saved to config.json")
 
@@ -235,12 +265,27 @@ class MotorMonitorGUI(QMainWindow):
 
     def update_graphs(self, data):
         current_time = time.time()
+        time_window = self.time_window_spin.value()
+
         for var_name, var_data in data.items():
             if var_name in self.data_history:
                 hist = self.data_history[var_name]
                 hist['time'].append(current_time)
                 hist['values'].append(var_data['value'])
 
+                # Filter data by time window
+                cutoff_time = current_time - time_window
+                valid_indices = [i for i, t in enumerate(hist['time']) if t >= cutoff_time]
+
+                if valid_indices:
+                    hist['time'] = [hist['time'][i] for i in valid_indices]
+                    hist['values'] = [hist['values'][i] for i in valid_indices]
+                else:
+                    # Keep at least the latest point if all data is outside window
+                    hist['time'] = hist['time'][-1:]
+                    hist['values'] = hist['values'][-1:]
+
+                # Also limit by history size
                 max_size = self.config.graph_history_size
                 if len(hist['time']) > max_size:
                     hist['time'] = hist['time'][-max_size:]
@@ -250,10 +295,19 @@ class MotorMonitorGUI(QMainWindow):
                     times = np.array(hist['time'])
                     values = np.array(hist['values'])
                     if len(times) > 0:
+                        # Use relative time starting from the oldest point in the window
                         rel_times = times - times[0]
                         self.plots[var_name]['curve'].setData(rel_times, values)
+
+                        # Set X range to show the time window
+                        plot = self.plots[var_name]['plot']
+                        plot.setXRange(0, time_window, padding=0)
+
+                        # Auto range only Y axis if enabled
                         if self.auto_zoom_cb.isChecked():
-                            self.plots[var_name]['plot'].autoRange()
+                            plot.enableAutoRange(axis=pg.ViewBox.YAxis)
+                        else:
+                            plot.disableAutoRange(axis=pg.ViewBox.YAxis)
 
     def apply_write_value(self, var_name):
         if var_name not in self.write_controls:
@@ -271,6 +325,39 @@ class MotorMonitorGUI(QMainWindow):
             print(f"Wrote {value} to {var_name}")
         else:
             QMessageBox.warning(self, "Write Error", f"Failed to write to {var_name}")
+
+    def change_motor(self):
+        """Change the motor being monitored"""
+        motor_id = self.motor_select.value()
+
+        # Update config with new motor selection
+        self.config.motor_to_monitor = motor_id
+        self.config.update_motor_offsets(motor_id)
+
+        # Update motor status label
+        self.motor_status_label.setText(f"Motor {motor_id}")
+
+        # Update graph titles and data monitoring
+        self.update_motor_graph_titles(motor_id)
+
+        # Save config
+        self.config.save_config()
+
+        print(f"Changed monitored motor to motor {motor_id}")
+
+    def update_motor_graph_titles(self, motor_id):
+        """Update graph titles to reflect current motor"""
+        import re
+        for var in self.config.read_variables:
+            if var.graph and var.graph.get('title'):
+                if var.name.startswith('motor_'):
+                    var.graph['title'] = re.sub(r'Motor \d+', f'Motor {motor_id}', var.graph['title'])
+                elif var.name.startswith('pid_'):
+                    var.graph['title'] = re.sub(r'Motor \d+ PID', f'Motor {motor_id} PID', var.graph['title'])
+
+        # Recreate plots with updated titles
+        self.plot_widget.clear()
+        self.create_graph_widget()
 
     def clear_history(self):
         for hist in self.data_history.values():

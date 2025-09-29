@@ -1,20 +1,31 @@
 {
-  "read_struct_name": "monitor_read_data",
-  "write_struct_name": "monitor_write_data",
   "openocd_host": "localhost",
   "openocd_port": 4444,
-  "update_interval_ms": 100,
-  "graph_history_size": 1000,
-  "map_file": "../build/stm32f407ighx.map",
   "auto_start_openocd": true,
   "openocd_config_file": null,
   "openocd_interface": "cmsis-dap",
   "openocd_target": "stm32f4x",
-  "motor_to_monitor": 0,
+  "map_file": "../build/stm32f407ighx.map",
+  "update_interval_ms": 100,
+  "graph_history_size": 1000,
+  "motor_to_monitor": 1,
+  "motor_base_address": {
+    "motor_status_base": 0,
+    "pid_status_base": 64,
+    "write_pid_target_base": 0,
+    "write_pid_enable_base": 32,
+    "write_pid_kp_base": 64,
+    "write_pid_ki_base": 96,
+    "write_pid_kd_base": 128,
+    "write_pid_output_limit_base": 160,
+    "write_pid_mode_base": 192
+  },
+  "read_struct_name": "monitor_read_data",
+  "write_struct_name": "monitor_write_data",
   "read_variables": [
     {
       "name": "motor_current",
-      "offset": 0,
+      "offset": 8,
       "type": "INT16",
       "signed": true,
       "scale": 1.0,
@@ -32,7 +43,7 @@
     },
     {
       "name": "motor_velocity",
-      "offset": 2,
+      "offset": 10,
       "type": "INT16",
       "signed": true,
       "scale": 1.0,
@@ -50,7 +61,7 @@
     },
     {
       "name": "motor_position",
-      "offset": 4,
+      "offset": 12,
       "type": "INT16",
       "signed": true,
       "scale": 1.0,
@@ -68,11 +79,11 @@
     },
     {
       "name": "motor_temperature",
-      "offset": 6,
-      "type": "UINT8",
+      "offset": 14,
+      "type": "INT8",
       "signed": false,
       "scale": 1.0,
-      "unit": "°C",
+      "unit": "\u00b0C",
       "min_val": null,
       "max_val": null,
       "writable": false,
@@ -81,13 +92,13 @@
         "visible": true,
         "y_min": 0,
         "y_max": 120,
-        "title": "Motor Temperature (°C)"
+        "title": "Motor Temperature (\u00b0C)"
       }
     },
     {
       "name": "pid_kp",
-      "offset": 128,
-      "type": "FLOAT",
+      "offset": 92,
+      "type": "INT32",
       "signed": true,
       "scale": 1.0,
       "unit": "",
@@ -99,13 +110,13 @@
         "visible": false,
         "y_min": null,
         "y_max": null,
-        "title": "PID Kp"
+        "title": "Motor PID Kp"
       }
     },
     {
       "name": "pid_ki",
-      "offset": 132,
-      "type": "FLOAT",
+      "offset": 96,
+      "type": "INT32",
       "signed": true,
       "scale": 1.0,
       "unit": "",
@@ -117,13 +128,13 @@
         "visible": false,
         "y_min": null,
         "y_max": null,
-        "title": "PID Ki"
+        "title": "Motor PID Ki"
       }
     },
     {
       "name": "pid_kd",
-      "offset": 136,
-      "type": "FLOAT",
+      "offset": 100,
+      "type": "INT32",
       "signed": true,
       "scale": 1.0,
       "unit": "",
@@ -135,13 +146,13 @@
         "visible": false,
         "y_min": null,
         "y_max": null,
-        "title": "PID Kd"
+        "title": "Motor PID Kd"
       }
     },
     {
       "name": "pid_output_limit",
-      "offset": 140,
-      "type": "FLOAT",
+      "offset": 104,
+      "type": "INT32",
       "signed": true,
       "scale": 1.0,
       "unit": "",
@@ -153,13 +164,13 @@
         "visible": false,
         "y_min": null,
         "y_max": null,
-        "title": "PID Output Limit"
+        "title": "Motor PID Output Limit"
       }
     },
     {
       "name": "pid_mode",
-      "offset": 184,
-      "type": "UINT8",
+      "offset": 148,
+      "type": "INT8",
       "signed": false,
       "scale": 1.0,
       "unit": "",
@@ -176,8 +187,8 @@
     },
     {
       "name": "pid_target",
-      "offset": 156,
-      "type": "FLOAT",
+      "offset": 120,
+      "type": "INT32",
       "signed": true,
       "scale": 1.0,
       "unit": "",
@@ -189,13 +200,13 @@
         "visible": true,
         "y_min": -1000,
         "y_max": 1000,
-        "title": "PID Target"
+        "title": "Motor PID Target"
       }
     },
     {
       "name": "pid_enabled",
-      "offset": 188,
-      "type": "UINT8",
+      "offset": 152,
+      "type": "INT8",
       "signed": false,
       "scale": 1.0,
       "unit": "",
@@ -213,7 +224,7 @@
     {
       "name": "timestamp",
       "offset": 256,
-      "type": "UINT32",
+      "type": "INT32",
       "signed": false,
       "scale": 1.0,
       "unit": "ms",
@@ -231,9 +242,9 @@
   ],
   "write_variables": [
     {
-      "name": "pid_target",
-      "offset": 0,
-      "type": "FLOAT",
+      "name": "PID Target",
+      "offset": 4,
+      "type": "INT32",
       "signed": true,
       "scale": 1.0,
       "unit": "",
@@ -249,9 +260,9 @@
       }
     },
     {
-      "name": "pid_enable",
-      "offset": 32,
-      "type": "UINT8",
+      "name": "PID On",
+      "offset": 33,
+      "type": "INT8",
       "signed": false,
       "scale": 1.0,
       "unit": "",
@@ -267,9 +278,9 @@
       }
     },
     {
-      "name": "pid_kp",
-      "offset": 64,
-      "type": "FLOAT",
+      "name": "PID Kp",
+      "offset": 68,
+      "type": "INT32",
       "signed": true,
       "scale": 1.0,
       "unit": "",
@@ -285,9 +296,9 @@
       }
     },
     {
-      "name": "pid_ki",
-      "offset": 96,
-      "type": "FLOAT",
+      "name": "PID Ki",
+      "offset": 100,
+      "type": "INT32",
       "signed": true,
       "scale": 1.0,
       "unit": "",
@@ -303,9 +314,9 @@
       }
     },
     {
-      "name": "pid_kd",
-      "offset": 128,
-      "type": "FLOAT",
+      "name": "PID Kd",
+      "offset": 132,
+      "type": "INT32",
       "signed": true,
       "scale": 1.0,
       "unit": "",
@@ -321,9 +332,9 @@
       }
     },
     {
-      "name": "pid_output_limit",
-      "offset": 160,
-      "type": "FLOAT",
+      "name": "PID Output Limit",
+      "offset": 164,
+      "type": "INT32",
       "signed": true,
       "scale": 1.0,
       "unit": "",
@@ -339,9 +350,9 @@
       }
     },
     {
-      "name": "pid_mode",
-      "offset": 192,
-      "type": "UINT8",
+      "name": "PID Mode",
+      "offset": 193,
+      "type": "INT8",
       "signed": false,
       "scale": 1.0,
       "unit": "",
@@ -357,9 +368,9 @@
       }
     },
     {
-      "name": "use_pid_control",
+      "name": "Enable PID",
       "offset": 224,
-      "type": "UINT8",
+      "type": "INT8",
       "signed": false,
       "scale": 1.0,
       "unit": "",

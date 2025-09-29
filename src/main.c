@@ -15,7 +15,6 @@ int main() {
 
   bsp.can.setup();
   bsp.motor.setup();
-  bsp.can.bind_rx_callback(bsp.motor.update_status);
 
   app.init();
   // app.sendback.bind_buf(&uart_rx_buf);
@@ -26,17 +25,17 @@ int main() {
   // bsp.motor.set(3,  500);
   // bsp.motor.set(4,  500);
   // bsp.motor.set(5, 1000);
-  bsp.motor.set(6, 1000);
+  bsp.motor.set(1, 500);
   // bsp.motor.set(7, 1000);
   bsp.led.show(0xffffffff);
 
   bsp.cron.add_job(app.tick.update);
   bsp.cron.add_job(bsp.motor.send_ctrl_signal);
   bsp.cron.add_job(app.mon.update);
+  bsp.can.bind_rx_callback(bsp.motor.update_status);
 
   // Main loop
   while (true) {
-
     // bsp.uart.dma.rxbuf_daemon();
     // app.sendback.daemon();
     // app.handle_cmd.daemon();

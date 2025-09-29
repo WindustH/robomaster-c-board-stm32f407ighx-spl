@@ -63,6 +63,21 @@ class MonitorConfig:
         # Monitoring settings
         self.update_interval_ms = 100
         self.graph_history_size = 1000
+        self.time_window_seconds = 10.0
+
+        # Motor settings
+        self.motor_to_monitor = 1  # Default motor is 1
+        self.motor_base_address = {
+            'motor_status_base': 0,
+            'pid_status_base': 64,
+            'write_pid_target_base': 0,
+            'write_pid_enable_base': 32,
+            'write_pid_kp_base': 64,
+            'write_pid_ki_base': 96,
+            'write_pid_kd_base': 128,
+            'write_pid_output_limit_base': 160,
+            'write_pid_mode_base': 192
+        }
 
         # Struct names - now fully configurable
         self.read_struct_name = "monitor_read"
@@ -105,10 +120,15 @@ class MonitorConfig:
             # Load all basic settings
             for key in ['read_struct_name', 'write_struct_name', 'openocd_host',
                        'openocd_port', 'update_interval_ms', 'graph_history_size',
-                       'map_file', 'auto_start_openocd',
-                       'openocd_config_file', 'openocd_interface', 'openocd_target']:
+                       'time_window_seconds', 'map_file', 'auto_start_openocd',
+                       'openocd_config_file', 'openocd_interface', 'openocd_target',
+                       'motor_to_monitor']:
                 if key in config:
                     setattr(self, key, config[key])
+
+            # Load motor base address
+            if 'motor_base_address' in config:
+                self.motor_base_address = config['motor_base_address']
 
             # Load read variables
             if 'read_variables' in config:
@@ -162,6 +182,11 @@ class MonitorConfig:
             # Monitoring settings
             'update_interval_ms': self.update_interval_ms,
             'graph_history_size': self.graph_history_size,
+            'time_window_seconds': self.time_window_seconds,
+
+            # Motor settings
+            'motor_to_monitor': self.motor_to_monitor,
+            'motor_base_address': self.motor_base_address,
 
             # Struct names
             'read_struct_name': self.read_struct_name,
@@ -177,3 +202,73 @@ class MonitorConfig:
 
         with open(self.config_file, 'w') as f:
             json.dump(config, indent=2, fp=f)
+
+    def calculate_motor_offsets(self, motor_id):
+        """Calculate offsets for the specified motor ID using base addresses"""
+        base = self.motor_base_address
+
+        # Structure sizes
+        MOTOR_STATUS_SIZE = 8  # sizeof(motStat)
+        PID_STATUS_SIZE = 28   # sizeof(pidStat)
+
+        # Motor status offsets (monitor_read_data.motors[motor_id])
+        motor_base_offset = base['motor_status_base'] + (motor_id * MOTOR_STATUS_SIZE)
+
+        # PID status offsets (monitor_read_data.pids[motor_id])
+        pid_base_offset = base['pid_status_base'] + (motor_id * PID_STATUS_SIZE)
+
+        # Write variable offsets (monitor_write_data)
+        write_pid_target_offset = base['write_pid_target_base'] + (motor_id * 4)  # 4 bytes per float
+        write_pid_enable_offset = base['write_pid_enable_base'] + motor_id  # 1 byte per bool
+        write_pid_kp_offset = base['write_pid_kp_base'] + (motor_id * 4)  # 4 bytes per float
+        write_pid_ki_offset = base['write_pid_ki_base'] + (motor_id * 4)  # 4 bytes per float
+        write_pid_kd_offset = base['write_pid_kd_base'] + (motor_id * 4)  # 4 bytes per float
+        write_pid_output_limit_offset = base['write_pid_output_limit_base'] + (motor_id * 4)  # 4 bytes per float
+        write_pid_mode_offset = base['write_pid_mode_base'] + motor_id  # 1 byte per enum
+
+        return {
+            'motor_current': motor_base_offset + 0,
+            'motor_velocity': motor_base_offset + 2,
+            'motor_position': motor_base_offset + 4,
+            'motor_temperature': motor_base_offset + 6,
+
+            'pid_kp': pid_base_offset + 0,
+            'pid_ki': pid_base_offset + 4,
+            'pid_kd': pid_base_offset + 8,
+            'pid_output_limit': pid_base_offset + 12,
+            'pid_mode': pid_base_offset + 56,  # mode is at offset 56 in pidStat
+            'pid_target': pid_base_offset + 28,  # target is at offset 28 in pidStat
+            'pid_enabled': pid_base_offset + 60,  # enabled is at offset 60 in pidStat
+
+            'write_pid_target': write_pid_target_offset,
+            'write_pid_enable': write_pid_enable_offset,
+            'write_pid_kp': write_pid_kp_offset,
+            'write_pid_ki': write_pid_ki_offset,
+            'write_pid_kd': write_pid_kd_offset,
+            'write_pid_output_limit': write_pid_output_limit_offset,
+            'write_pid_mode': write_pid_mode_offset
+        }
+
+    def update_motor_offsets(self, motor_id):
+        """Update all variable offsets for the specified motor"""
+        offsets = self.calculate_motor_offsets(motor_id)
+
+        # Update read variables
+        for var in self.read_variables:
+            if var.name in offsets:
+                var.offset = offsets[var.name]
+
+        # Update write variables
+        write_mapping = {
+            'pid_target': 'write_pid_target',
+            'pid_enable': 'write_pid_enable',
+            'pid_kp': 'write_pid_kp',
+            'pid_ki': 'write_pid_ki',
+            'pid_kd': 'write_pid_kd',
+            'pid_output_limit': 'write_pid_output_limit',
+            'pid_mode': 'write_pid_mode'
+        }
+
+        for var in self.write_variables:
+            if var.name in write_mapping:
+                var.offset = offsets[write_mapping[var.name]]
