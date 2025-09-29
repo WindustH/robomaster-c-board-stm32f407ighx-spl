@@ -1,0 +1,162 @@
+{
+  "graphs": [
+    {
+      "id": "graph_motor_current",
+      "title": "Motor Current",
+      "data_sources": ["motor_0_current", "motor_1_current"],
+      "style": {
+        "colors": ["#ff6464", "#6464ff"],
+        "y_min": -20000,
+        "y_max": 20000,
+        "y_label": "Current (mA)",
+        "x_label": "Time (s)",
+        "legend": true,
+        "grid": true
+      }
+    },
+    {
+      "id": "graph_motor_velocity",
+      "title": "Motor Velocity",
+      "data_sources": ["motor_0_velocity", "motor_1_velocity"],
+      "style": {
+        "colors": ["#64ff64", "#ff64ff"],
+        "y_min": -10000,
+        "y_max": 10000,
+        "y_label": "Velocity (RPM)",
+        "x_label": "Time (s)",
+        "legend": true,
+        "grid": true
+      }
+    },
+    {
+      "id": "graph_motor_position",
+      "title": "Motor Position",
+      "data_sources": ["motor_0_position", "motor_1_position"],
+      "style": {
+        "colors": ["#6464ff", "#ffff64"],
+        "y_min": -32768,
+        "y_max": 32767,
+        "y_label": "Position (deg)",
+        "x_label": "Time (s)",
+        "legend": true,
+        "grid": true
+      }
+    },
+    {
+      "id": "graph_motor_temperature",
+      "title": "Motor Temperature",
+      "data_sources": ["motor_0_temperature", "motor_1_temperature"],
+      "style": {
+        "colors": ["#ffaa00", "#00aaff"],
+        "y_min": 0,
+        "y_max": 120,
+        "y_label": "Temperature (°C)",
+        "x_label": "Time (s)",
+        "legend": true,
+        "grid": true
+      }
+    },
+    {
+      "id": "graph_pid_target",
+      "title": "PID Target",
+      "data_sources": ["pid_0_target"],
+      "style": {
+        "colors": ["#ffaa64"],
+        "y_min": -1000,
+        "y_max": 1000,
+        "y_label": "Target Value",
+        "x_label": "Time (s)",
+        "legend": false,
+        "grid": true
+      }
+    }
+  ],
+  "controls": [
+    {
+      "id": "control_pid_0_target",
+      "title": "PID 0 Target",
+      "data_source": "write_pid_0_target",
+      "style": {
+        "control_type": "slider",
+        "color": "#ffaa64",
+        "min_value": -1000,
+        "max_value": 1000,
+        "step": 1,
+        "default_value": 0,
+        "show_value": true
+      }
+    },
+    {
+      "id": "control_pid_0_kp",
+      "title": "PID 0 Kp",
+      "data_source": "write_pid_0_kp",
+      "style": {
+        "control_type": "slider",
+        "color": "#64ff64",
+        "min_value": 0,
+        "max_value": 10,
+        "step": 0.1,
+        "default_value": 1.0,
+        "show_value": true
+      }
+    },
+    {
+      "id": "control_pid_0_ki",
+      "title": "PID 0 Ki",
+      "data_source": "write_pid_0_ki",
+      "style": {
+        "control_type": "slider",
+        "color": "#6464ff",
+        "min_value": 0,
+        "max_value": 5,
+        "step": 0.01,
+        "default_value": 0.1,
+        "show_value": true
+      }
+    },
+    {
+      "id": "control_pid_0_kd",
+      "title": "PID 0 Kd",
+      "data_source": "write_pid_0_kd",
+      "style": {
+        "control_type": "slider",
+        "color": "#ff64ff",
+        "min_value": 0,
+        "max_value": 2,
+        "step": 0.01,
+        "default_value": 0.01,
+        "show_value": true
+      }
+    },
+    {
+      "id": "control_pid_0_output_limit",
+      "title": "PID 0 Output Limit",
+      "data_source": "write_pid_0_output_limit",
+      "style": {
+        "control_type": "slider",
+        "color": "#ffff64",
+        "min_value": 0,
+        "max_value": 1000,
+        "step": 10,
+        "default_value": 1000,
+        "show_value": true
+      }
+    },
+    {
+      "id": "control_pid_0_mode",
+      "title": "PID 0 Mode",
+      "data_source": "write_pid_0_mode",
+      "style": {
+        "control_type": "dropdown",
+        "color": "#64ffff",
+        "options": [
+          {"value": 0, "label": "Position"},
+          {"value": 1, "label": "Velocity"},
+          {"value": 2, "label": "Current"}
+        ],
+        "default_value": 1,
+        "show_value": true
+      }
+    }
+  ]
+}
