@@ -18,18 +18,6 @@
                 "reveal": "always",
                 "focus": false,
                 "panel": "shared"
-            },
-            "problemMatcher": {
-                "owner": "cpp",
-                "fileLocation": "absolute",
-                "pattern": {
-                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-                    "file": 1,
-                    "line": 2,
-                    "column": 3,
-                    "severity": 4,
-                    "message": 5
-                }
             }
         },
         {
@@ -49,18 +37,22 @@
                 "reveal": "always",
                 "focus": false,
                 "panel": "shared"
+            }
+        },
+        {
+            "label": "debug-panel",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/debug-panel && uv run python main.py",
+            "args": [],
+            "group": {
+                "kind": "none",
+                "isDefault": true
             },
-            "problemMatcher": {
-                "owner": "cpp",
-                "fileLocation": "absolute",
-                "pattern": {
-                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-                    "file": 1,
-                    "line": 2,
-                    "column": 3,
-                    "severity": 4,
-                    "message": 5
-                }
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
             }
         },
         {

@@ -14,7 +14,7 @@ class DataMonitor(QObject):
     data_updated = pyqtSignal(dict)
     connection_status = pyqtSignal(bool)
 
-    def __init__(self, config: MonitorConfig, parser: ElfMapParser):
+    def __init__(self, config: MonitorConfig, parser: MapParser):
         super().__init__()
         self.config = config
         self.parser = parser

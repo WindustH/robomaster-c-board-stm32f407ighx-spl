@@ -40,6 +40,10 @@
         {
             "label": "$(cloud-download) Flash",
             "task": "flash",
+        },
+        {
+            "label": "$(browser) Panel",
+            "task": "debug-panel",
         }
     ]
 }

@@ -38,22 +38,22 @@ typedef struct {
 
 // CAN Header Types
 typedef struct {
-  uint32_t StdId;              // Standard Identifier
-  uint32_t ExtId;              // Extended Identifier
-  uint32_t IDE;                // Identifier Type
-  uint32_t RTR;                // Remote Transmission Request
-  uint32_t DLC;                // Data Length Code
-  uint32_t TransmitGlobalTime; // Transmit Global Time
+  u32 StdId;              // Standard Identifier
+  u32 ExtId;              // Extended Identifier
+  u32 IDE;                // Identifier Type
+  u32 RTR;                // Remote Transmission Request
+  u32 DLC;                // Data Length Code
+  u32 TransmitGlobalTime; // Transmit Global Time
 } canTxH;
 
 typedef struct {
-  uint32_t StdId;            // Standard Identifier
-  uint32_t ExtId;            // Extended Identifier
-  uint32_t IDE;              // Identifier Type
-  uint32_t RTR;              // Remote Transmission Request
-  uint32_t DLC;              // Data Length Code
-  uint32_t FilterMatchIndex; // Filter Match Index
-  uint32_t Timestamp;        // Timestamp
+  u32 StdId;            // Standard Identifier
+  u32 ExtId;            // Extended Identifier
+  u32 IDE;              // Identifier Type
+  u32 RTR;              // Remote Transmission Request
+  u32 DLC;              // Data Length Code
+  u32 FilterMatchIndex; // Filter Match Index
+  u32 Timestamp;        // Timestamp
 } canRxH;
 
 // Motor feedback structure
