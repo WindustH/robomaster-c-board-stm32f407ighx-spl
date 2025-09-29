@@ -8,6 +8,7 @@ import sys
 import time
 from typing import Dict, Any
 
+import numpy as np
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
                            QWidget, QSplitter, QMessageBox, QDialog, QLabel,
                            QDoubleSpinBox, QCheckBox)

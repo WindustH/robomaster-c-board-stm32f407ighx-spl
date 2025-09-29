@@ -55,6 +55,22 @@ class DataMonitor(QObject):
             return False
 
         try:
+            # Get current offset for this variable
+            offsets = self.config.calculate_motor_offsets(self.config.motor_to_monitor)
+            write_mapping = {
+                'PID Target': 'write_pid_target',
+                'PID Kp': 'write_pid_kp',
+                'PID Ki': 'write_pid_ki',
+                'PID Kd': 'write_pid_kd',
+                'PID Output Limit': 'write_pid_output_limit',
+                'PID Mode': 'write_pid_mode'
+            }
+
+            if var_config.name not in write_mapping:
+                return False
+
+            offset = offsets[write_mapping[var_config.name]]
+
             if var_config.type == VariableType.FLOAT:
                 data = struct.pack('<f', float(value))
             elif var_config.type == VariableType.DOUBLE:
@@ -71,7 +87,7 @@ class DataMonitor(QObject):
             else:
                 return False
 
-            self.openocd.write_memory(self.write_address + var_config.offset, data)
+            self.openocd.write_memory(self.write_address + offset, data)
             return True
         except Exception as e:
             print(f"Write error: {e}")
@@ -81,7 +97,11 @@ class DataMonitor(QObject):
         """Main monitoring loop"""
         while self.running:
             try:
-                max_offset = max((var.offset + var.type.value for var in self.config.read_variables), default=0)
+                # Calculate current offsets for all read variables
+                offsets = self.config.calculate_motor_offsets(self.config.motor_to_monitor)
+
+                # Calculate maximum offset needed for reading
+                max_offset = max((offsets.get(var.name, 0) + var.type.value for var in self.config.read_variables), default=0)
                 if max_offset == 0 or self.read_address is None:
                     time.sleep(0.1)
                     continue
@@ -90,7 +110,7 @@ class DataMonitor(QObject):
                 parsed_data = {}
                 for var in self.config.read_variables:
                     try:
-                        offset = var.offset
+                        offset = offsets.get(var.name, 0)
                         if offset + var.type.value <= len(data):
                             raw_bytes = data[offset:offset + var.type.value]
                             if var.type == VariableType.FLOAT:

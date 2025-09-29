@@ -170,13 +170,11 @@ All custom types are defined in `src/type.h`:
 
   typedef struct {
       f32 pid_targets[8];        // PID target values
-      u8 pid_enabled[8];         // PID enable/disable flags
       f32 pid_kp[8];             // PID proportional gains
       f32 pid_ki[8];             // PID integral gains
       f32 pid_kd[8];             // PID derivative gains
       f32 pid_output_limit[8];   // PID output limits
       pidMode pid_mode[8];       // PID control modes
-      u8 use_pid_control;        // PID control flag
   } monWrite;
   ```
 
@@ -190,12 +188,14 @@ All custom types are defined in `src/type.h`:
 ### Application Modules (`src/mod/app.h`)
 
 #### PID Module (`_PidMod`)
-- **setup()**: Initialize PID controller with parameters
-- **update()**: Update PID calculation
+- **setup()**: Initialize all PID controllers with default values
+- **update()**: Update all enabled PID controllers
 - **reset()**: Reset PID state
 - **enable()/disable()**: Control PID operation
 - **set_target()**: Set target value
 - **set_kp()/set_ki()/set_kd()**: Tune PID parameters
+- **set_output_limit()**: Set output saturation limit
+- **set_mode()**: Set control mode
 - **status()**: Get current PID status
 
 #### Tick Module (`_TickMod`)
@@ -215,8 +215,12 @@ All custom types are defined in `src/type.h`:
 
 **Usage Example:**
 ```c
-app.init();                    // Initialize all application modules
-app.pid.setup(0, 1.0, 0.1, 0.01, 0.001, 1000, PID_VELOCITY);
+app.init();                    // Initialize all application modules (includes pid.setup())
+app.pid.set_kp(0, 1.0f);
+app.pid.set_ki(0, 0.1f);
+app.pid.set_kd(0, 0.01f);
+app.pid.set_output_limit(0, 1000.0f);
+app.pid.set_mode(0, PID_VELOCITY);
 app.pid.enable(0);
 app.pid.set_target(0, 1000.0);
 app.tick.get();               // Get current system tick
@@ -319,7 +323,7 @@ _can.send(&header, data, NULL);
 
 #### Motor Module (`_MotorMod`)
 - **setup()**: Initialize motor control
-- **set()**: Set motor current
+- **set_current()**: Set motor current
 - **status()**: Get motor status
 - **send_ctrl_signal()**: Send control signals
 - **update_status()**: Update motor status from CAN
@@ -327,7 +331,7 @@ _can.send(&header, data, NULL);
 **Usage Example:**
 ```c
 _motor.setup();
-_motor.set(0, 1000);  // Set motor 0 to 1000mA
+_motor.set_current(0, 1000);  // Set motor 0 to 1000mA
 motStat status = _motor.status(0);
 _motor.send_ctrl_signal();  // Send control signals to all motors
 ```

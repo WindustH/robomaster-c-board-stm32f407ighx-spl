@@ -165,11 +165,11 @@ class GraphPanel:
         """Update graph titles to reflect current motor"""
         import re
         for var in self.config.read_variables:
-            if var.graph and var.graph.get('title'):
+            if var.graph and var.graph.title:
                 if var.name.startswith('motor_'):
-                    var.graph['title'] = re.sub(r'Motor \d+', f'Motor {motor_id}', var.graph['title'])
+                    var.graph.title = re.sub(r'Motor \d+', f'Motor {motor_id}', var.graph.title)
                 elif var.name.startswith('pid_'):
-                    var.graph['title'] = re.sub(r'Motor \d+ PID', f'Motor {motor_id} PID', var.graph['title'])
+                    var.graph.title = re.sub(r'Motor \d+ PID', f'Motor {motor_id} PID', var.graph.title)
 
         # Recreate plots with updated titles
         self.plot_widget.clear()

@@ -2,9 +2,8 @@
 #include "type.h"
 
 typedef struct {
-  void (*setup)(u8 motor_id, f32 kp, f32 ki, f32 kd, f32 dt, f32 output_limit,
-                pidMode mode);
-  void (*update)(u8 motor_id);
+  void (*setup)();
+  void (*update)();
   void (*reset)(u8 motor_id);
   void (*enable)(u8 motor_id);
   void (*disable)(u8 motor_id);

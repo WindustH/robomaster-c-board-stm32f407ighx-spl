@@ -28,7 +28,6 @@ class GraphConfig:
 @dataclass
 class VariableConfig:
     name: str
-    offset: int
     type: VariableType
     signed: bool = True
     scale: float = 1.0
@@ -209,7 +208,7 @@ class MonitorConfig:
 
         # Structure sizes
         MOTOR_STATUS_SIZE = 8  # sizeof(motStat)
-        PID_STATUS_SIZE = 28   # sizeof(pidStat)
+        PID_STATUS_SIZE = 40   # sizeof(pidStat)
 
         # Motor status offsets (monitor_read_data.motors[motor_id])
         motor_base_offset = base['motor_status_base'] + (motor_id * MOTOR_STATUS_SIZE)
@@ -219,7 +218,6 @@ class MonitorConfig:
 
         # Write variable offsets (monitor_write_data)
         write_pid_target_offset = base['write_pid_target_base'] + (motor_id * 4)  # 4 bytes per float
-        write_pid_enable_offset = base['write_pid_enable_base'] + motor_id  # 1 byte per bool
         write_pid_kp_offset = base['write_pid_kp_base'] + (motor_id * 4)  # 4 bytes per float
         write_pid_ki_offset = base['write_pid_ki_base'] + (motor_id * 4)  # 4 bytes per float
         write_pid_kd_offset = base['write_pid_kd_base'] + (motor_id * 4)  # 4 bytes per float
@@ -235,13 +233,11 @@ class MonitorConfig:
             'pid_kp': pid_base_offset + 0,
             'pid_ki': pid_base_offset + 4,
             'pid_kd': pid_base_offset + 8,
-            'pid_output_limit': pid_base_offset + 12,
-            'pid_mode': pid_base_offset + 56,  # mode is at offset 56 in pidStat
-            'pid_target': pid_base_offset + 28,  # target is at offset 28 in pidStat
-            'pid_enabled': pid_base_offset + 60,  # enabled is at offset 60 in pidStat
+            'pid_output_limit': pid_base_offset + 16,
+            'pid_mode': pid_base_offset + 20,  # mode is at offset 20 in pidStat
+            'pid_target': pid_base_offset + 32,  # target is at offset 32 in pidStat
 
             'write_pid_target': write_pid_target_offset,
-            'write_pid_enable': write_pid_enable_offset,
             'write_pid_kp': write_pid_kp_offset,
             'write_pid_ki': write_pid_ki_offset,
             'write_pid_kd': write_pid_kd_offset,
@@ -250,25 +246,5 @@ class MonitorConfig:
         }
 
     def update_motor_offsets(self, motor_id):
-        """Update all variable offsets for the specified motor"""
-        offsets = self.calculate_motor_offsets(motor_id)
-
-        # Update read variables
-        for var in self.read_variables:
-            if var.name in offsets:
-                var.offset = offsets[var.name]
-
-        # Update write variables
-        write_mapping = {
-            'pid_target': 'write_pid_target',
-            'pid_enable': 'write_pid_enable',
-            'pid_kp': 'write_pid_kp',
-            'pid_ki': 'write_pid_ki',
-            'pid_kd': 'write_pid_kd',
-            'pid_output_limit': 'write_pid_output_limit',
-            'pid_mode': 'write_pid_mode'
-        }
-
-        for var in self.write_variables:
-            if var.name in write_mapping:
-                var.offset = offsets[write_mapping[var.name]]
+        """Update motor ID - offsets are now calculated dynamically"""
+        self.motor_to_monitor = motor_id

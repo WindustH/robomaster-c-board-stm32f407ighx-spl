@@ -31,18 +31,8 @@ static void update_monitor() {
     app.pid.set_output_limit(i, monitor_write_data.pid_output_limit[i]);
     app.pid.set_mode(i, monitor_write_data.pid_mode[i]);
 
-    if (monitor_write_data.use_pid_control) {
-      // Use PID control
-      if (monitor_write_data.pid_enabled[i]) {
-        app.pid.set_target(i, monitor_write_data.pid_targets[i]);
-        app.pid.enable(i);
-      } else {
-        app.pid.disable(i);
-      }
-    } else {
-      // Disable PID control
-      app.pid.disable(i);
-    }
+    // Set PID target
+    app.pid.set_target(i, monitor_write_data.pid_targets[i]);
   }
 }
 

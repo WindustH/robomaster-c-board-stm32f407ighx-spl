@@ -43,7 +43,7 @@ static void setup_motor(void) {
 }
 
 // Set target current for a specific motor (non-blocking, just update target)
-static u8 set_current(u8 motor_id, i16 current) {
+static u8 set_current_impl(u8 motor_id, i16 current) {
   if (motor_id > 7) {
     return 1; // Invalid motor ID
   }
@@ -120,7 +120,8 @@ void motor_update_feedback(canRxH *rx_header, u8 *data) {
 
 // Export the motor module
 const _MotorMod _motor = {.setup = setup_motor,
-                          .set = set_current, // Sets target current
+                          .set_current =
+                              set_current_impl, // Sets target current
                           .status = read_feedback,
                           .send_ctrl_signal = motor_transmit,
                           .update_status = motor_update_feedback};

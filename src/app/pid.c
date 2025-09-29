@@ -2,25 +2,31 @@
 #include "mod/bsp.h"
 #include <string.h>
 
-static volatile pidStat pid_controllers[8] = {0};
+static volatile pidStat pid_controllers[8];
 
-static void setup_pid(const u8 motor_id, const f32 kp, const f32 ki,
-                      const f32 kd, const f32 dt, f32 output_limit,
-                      pidMode mode) {
+static void initialize_pid_controller(u8 motor_id) {
   if (motor_id > 7)
     return;
 
-  pid_controllers[motor_id].kp = kp;
-  pid_controllers[motor_id].ki = ki;
-  pid_controllers[motor_id].kd = kd;
-  pid_controllers[motor_id].dt = dt;
-  pid_controllers[motor_id].output_limit = output_limit;
-  pid_controllers[motor_id].mode = mode;
+  // Initialize with default values
+  pid_controllers[motor_id].kp = 0.0f;
+  pid_controllers[motor_id].ki = 0.0f;
+  pid_controllers[motor_id].kd = 0.0f;
+  pid_controllers[motor_id].dt = SECOND_PER_TICK;
+  pid_controllers[motor_id].output_limit = 1000.0f;
+  pid_controllers[motor_id].mode = PID_VELOCITY;
 
   pid_controllers[motor_id].integral = 0.0f;
   pid_controllers[motor_id].prev_error = 0.0f;
   pid_controllers[motor_id].target = 0.0f;
   pid_controllers[motor_id].enabled = 0;
+}
+
+static void pid_setup() {
+  // Initialize all PID controllers
+  for (u8 i = 0; i < 8; i++) {
+    initialize_pid_controller(i);
+  }
 }
 
 static void set_target_impl(u8 motor_id, f32 target) {
@@ -104,20 +110,22 @@ static f32 pid_compute(u8 motor_id) {
   return output;
 }
 
-static void pid_update(u8 motor_id) {
-  if (motor_id > 7)
-    return;
+static void pid_update() {
 
-  if (!pid_controllers[motor_id].enabled)
-    return;
+  for (u8 motor_id = 0; motor_id < 8; motor_id++) {
+    if (!pid_controllers[motor_id].enabled)
+      continue;
 
-  f32 output = pid_compute(motor_id);
+    f32 output = pid_compute(motor_id);
 
-  // Convert output to current (assuming output is in appropriate units)
-  i16 current = (i16)output;
+    // Convert output to current (assuming output is in appropriate units)
+    i16 current = (i16)output;
 
-  // Set motor current
-  bsp.motor.set(motor_id, current);
+    // Set motor current
+    bsp.motor.set_current(motor_id, current);
+    // Update all enabled PID controllers
+    bsp.led.show(0xFFFF0000);
+  }
 }
 
 static void pid_reset(u8 motor_id) {
@@ -165,7 +173,7 @@ static void set_mode_impl(u8 motor_id, pidMode mode) {
   pid_controllers[motor_id].mode = mode;
 }
 
-const _PidMod _pid = {.setup = setup_pid,
+const _PidMod _pid = {.setup = pid_setup,
                       .update = pid_update,
                       .reset = pid_reset,
                       .enable = pid_enable,

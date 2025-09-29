@@ -34,8 +34,13 @@ class OpenOCDInterface:
 
         try:
             self.socket.send(f"{command}\n".encode())
-            response = self.socket.recv(4096).decode()
-            return response.strip()
+            response = self.socket.recv(4096)
+            # Try to decode as UTF-8, but handle binary data gracefully
+            try:
+                return response.decode('utf-8').strip()
+            except UnicodeDecodeError:
+                # If UTF-8 fails, try to decode with error replacement
+                return response.decode('utf-8', errors='replace').strip()
         except Exception as e:
             print(f"OpenOCD command error: {e}")
             return ""
