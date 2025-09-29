@@ -5,7 +5,6 @@
   "openocd_port": 4444,
   "update_interval_ms": 100,
   "graph_history_size": 1000,
-  "elf_file": "../build/stm32f407ighx.elf",
   "map_file": "../build/stm32f407ighx.map",
   "auto_start_openocd": true,
   "openocd_config_file": null,

@@ -334,9 +334,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls/>
-              <Define>HSE_VALUE=12000000U, STM32F40_41xxx, USE_STDPERIPH_DRIVER</Define>
+              <Define>STM32F40_41xxx, USE_STDPERIPH_DRIVER</Define>
               <Undefine/>
-              <IncludePath>..\core\CMSIS\Device\ST\STM32F4xx\Include;..\core\CMSIS\Include;..\core\STM32F4xx_StdPeriph_Driver\inc;..\lib;..\src</IncludePath>
+              <IncludePath>..\core\CMSIS\Device\ST\STM32F4xx\Include;..\core\CMSIS\Include;..\lib;..\src</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -550,6 +550,11 @@
               <FileType>5</FileType>
               <FilePath>..\core\CMSIS\Include\tz_context.h</FilePath>
             </File>
+            <File>
+              <FileName>startup_stm32f407xx.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\startup-mdkarm\startup_stm32f407xx.s</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -639,6 +644,51 @@
               <FileName>modu.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\src\utils\modu.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>MOD</GroupName>
+          <Files>
+            <File>
+              <FileName>app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\mod\app.c</FilePath>
+            </File>
+            <File>
+              <FileName>app.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\src\mod\app.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\mod\bsp.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\src\mod\bsp.h</FilePath>
+            </File>
+            <File>
+              <FileName>err.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\mod\err.c</FilePath>
+            </File>
+            <File>
+              <FileName>err.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\src\mod\err.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>ERR</GroupName>
+          <Files>
+            <File>
+              <FileName>status_led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\err\status_led.c</FilePath>
             </File>
           </Files>
         </Group>

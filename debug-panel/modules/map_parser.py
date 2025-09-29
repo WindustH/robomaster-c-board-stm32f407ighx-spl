@@ -2,9 +2,8 @@ import re
 from typing import Dict, Optional
 
 
-class ElfMapParser:
-    def __init__(self, elf_file: Optional[str] = None, map_file: Optional[str] = None):
-        self.elf_file = elf_file
+class MapParser:
+    def __init__(self, map_file: Optional[str] = None):
         self.map_file = map_file
         self.symbols = {}
 

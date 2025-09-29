@@ -13,7 +13,7 @@ from PyQt5.QtGui import QFont, QColor
 import pyqtgraph as pg
 
 from modules.config import MonitorConfig, VariableType
-from modules.elf_parser import ElfMapParser
+from modules.map_parser import MapParser
 from modules.data_monitor import DataMonitor
 from modules.openocd_manager import OpenOCDManager
 
@@ -22,7 +22,7 @@ class MotorMonitorGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.config = MonitorConfig()
-        self.parser = ElfMapParser()
+        self.parser = MapParser()
         self.monitor = DataMonitor(self.config, self.parser)
         self.openocd_manager = OpenOCDManager(
             config_file=self.config.openocd_config_file,
@@ -51,7 +51,6 @@ class MotorMonitorGUI(QMainWindow):
         self.host_edit = QLineEdit()
         self.port_edit = QSpinBox()
         self.port_edit.setRange(1, 65535)
-        self.elf_file_edit = QLineEdit()
         self.map_file_edit = QLineEdit()
         self.openocd_config_edit = QLineEdit()
         self.auto_start_cb = QCheckBox("Auto-start OpenOCD")
@@ -63,10 +62,8 @@ class MotorMonitorGUI(QMainWindow):
         conn_layout.addWidget(self.host_edit, 0, 1)
         conn_layout.addWidget(QLabel("Port:"), 0, 2)
         conn_layout.addWidget(self.port_edit, 0, 3)
-        conn_layout.addWidget(QLabel("ELF:"), 1, 0)
-        conn_layout.addWidget(self.elf_file_edit, 1, 1)
-        conn_layout.addWidget(QLabel("MAP:"), 1, 2)
-        conn_layout.addWidget(self.map_file_edit, 1, 3)
+        conn_layout.addWidget(QLabel("MAP:"), 1, 0)
+        conn_layout.addWidget(self.map_file_edit, 1, 1, 1, 3)
         conn_layout.addWidget(QLabel("OpenOCD Config:"), 2, 0)
         conn_layout.addWidget(self.openocd_config_edit, 2, 1)
         conn_layout.addWidget(self.auto_start_cb, 2, 2, 1, 2)
@@ -91,7 +88,6 @@ class MotorMonitorGUI(QMainWindow):
     def load_config_into_ui(self):
         self.host_edit.setText(self.config.openocd_host)
         self.port_edit.setValue(self.config.openocd_port)
-        self.elf_file_edit.setText(self.config.elf_file)
         self.map_file_edit.setText(self.config.map_file)
         self.openocd_config_edit.setText(self.config.openocd_config_file or "")
         self.auto_start_cb.setChecked(self.config.auto_start_openocd)
@@ -190,7 +186,6 @@ class MotorMonitorGUI(QMainWindow):
     def save_current_config(self):
         self.config.openocd_host = self.host_edit.text()
         self.config.openocd_port = self.port_edit.value()
-        self.config.elf_file = self.elf_file_edit.text()
         self.config.map_file = self.map_file_edit.text()
         self.config.openocd_config_file = self.openocd_config_edit.text() or None
         self.config.auto_start_openocd = self.auto_start_cb.isChecked()
@@ -201,7 +196,6 @@ class MotorMonitorGUI(QMainWindow):
         if self.connect_btn.text() == "Connect":
             self.config.openocd_host = self.host_edit.text()
             self.config.openocd_port = self.port_edit.value()
-            self.config.elf_file = self.elf_file_edit.text()
             self.config.map_file = self.map_file_edit.text()
             self.config.openocd_config_file = self.openocd_config_edit.text() or None
             self.config.auto_start_openocd = self.auto_start_cb.isChecked()
@@ -211,7 +205,6 @@ class MotorMonitorGUI(QMainWindow):
             self.openocd_manager.interface = self.config.openocd_interface
             self.openocd_manager.target = self.config.openocd_target
 
-            self.parser.elf_file = self.config.elf_file
             self.parser.map_file = self.config.map_file
             self.parser.parse_map_file()
 

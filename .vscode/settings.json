@@ -20,7 +20,8 @@
         "hal-template": true,
         "keil-ver": true,
         "debug-panel": true,
-        "chat-history": true
+        "chat-history": true,
+        "archive.py": true
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "[c]": {

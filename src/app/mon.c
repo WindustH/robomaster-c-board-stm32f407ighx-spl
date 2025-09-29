@@ -2,8 +2,8 @@
 #include "mod/bsp.h"
 
 // Global monitor data structures
-static monitor_read_t monitor_read_data = {0};
-static monitor_write_t monitor_write_data = {0};
+static monRead monitor_read_data = {0};
+static monWrite monitor_write_data = {0};
 
 static void update_monitor() {
   // Update timestamp

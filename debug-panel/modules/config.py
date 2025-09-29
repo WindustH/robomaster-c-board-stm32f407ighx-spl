@@ -58,7 +58,6 @@ class MonitorConfig:
         self.openocd_target = "stm32f4x"
 
         # File settings
-        self.elf_file = "firmware.elf"
         self.map_file = "firmware.map"
 
         # Monitoring settings
@@ -90,8 +89,8 @@ class MonitorConfig:
     def _dict_to_var_config(self, data: dict) -> VariableConfig:
         var_type = VariableType[data['type']]
         graph = self._dict_to_graph_config(data.get('graph', {}))
-        # Remove 'graph' so it doesn't interfere with VariableConfig init
-        clean_data = {k: v for k, v in data.items() if k != 'graph'}
+        # Remove 'graph' and 'type' so they don't interfere with VariableConfig init
+        clean_data = {k: v for k, v in data.items() if k not in ['graph', 'type']}
         return VariableConfig(
             **clean_data,
             type=var_type,
@@ -106,7 +105,7 @@ class MonitorConfig:
             # Load all basic settings
             for key in ['read_struct_name', 'write_struct_name', 'openocd_host',
                        'openocd_port', 'update_interval_ms', 'graph_history_size',
-                       'elf_file', 'map_file', 'auto_start_openocd',
+                       'map_file', 'auto_start_openocd',
                        'openocd_config_file', 'openocd_interface', 'openocd_target']:
                 if key in config:
                     setattr(self, key, config[key])
@@ -158,7 +157,6 @@ class MonitorConfig:
             'openocd_target': self.openocd_target,
 
             # File settings
-            'elf_file': self.elf_file,
             'map_file': self.map_file,
 
             # Monitoring settings

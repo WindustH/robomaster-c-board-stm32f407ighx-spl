@@ -90,7 +90,7 @@ typedef struct {
 
   // System timestamp
   u32 timestamp;
-} monitor_read_t;
+} monRead;
 
 // Monitor write structure - all data we want to write to the system
 typedef struct {
@@ -109,4 +109,4 @@ typedef struct {
 
   // Control flags
   u8 use_pid_control; // 1 = use PID control, 0 = use direct current control
-} monitor_write_t;
+} monWrite;

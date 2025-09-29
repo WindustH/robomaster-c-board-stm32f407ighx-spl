@@ -6,7 +6,7 @@ from typing import Dict, Any
 from PyQt5.QtCore import QObject, pyqtSignal
 
 from modules.config import MonitorConfig, VariableConfig, VariableType
-from modules.elf_parser import ElfMapParser
+from modules.map_parser import MapParser
 from modules.openocd_interface import OpenOCDInterface
 
 

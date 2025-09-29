@@ -26,8 +26,8 @@ extern const _TickMod _tick;
 
 typedef struct {
   void (*update)();
-  monitor_read_t *read;
-  monitor_write_t *write;
+  monRead *read;
+  monWrite *write;
 } _MonMod;
 extern const _MonMod _mon;
 
