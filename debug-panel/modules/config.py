@@ -1,250 +1,289 @@
+"""
+Unified Configuration System
+
+Handles map.json and panel.json configuration with proper data structures
+"""
+
 import json
-import os
 from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, field
 from enum import Enum
 
 
-class VariableType(Enum):
+class DataType(Enum):
+    """Supported data types"""
     INT8 = 1
-    INT16 = 2
-    INT32 = 4
     UINT8 = 1
+    INT16 = 2
     UINT16 = 2
+    INT32 = 4
     UINT32 = 4
     FLOAT = 4
     DOUBLE = 8
 
 
 @dataclass
-class GraphConfig:
-    color: str = "#ff6464"  # Default red
-    visible: bool = True
-    y_min: Optional[float] = None
-    y_max: Optional[float] = None
-    title: Optional[str] = None  # If None, use var.name
+class VariableDefinition:
+    """Definition of a single variable from map.json"""
+    id: str
+    name: str
+    description: str
+    type: DataType
+    signed: bool
+    scale: float
+    unit: str
+    offset: int
+    field: str  # "read" or "write"
 
 
 @dataclass
-class VariableConfig:
-    name: str
-    type: VariableType
-    signed: bool = True
-    scale: float = 1.0
-    unit: str = ""
-    min_val: Optional[float] = None
-    max_val: Optional[float] = None
-    writable: bool = False
-    graph: GraphConfig = None
+class GraphStyle:
+    """Graph styling configuration"""
+    title: str = ""
+    x_label: str = "Time (s)"
+    y_label: str = "Value"
+    colors: List[str] = field(default_factory=lambda: ["#ff6464", "#6464ff", "#64ff64", "#ff64ff", "#ffff64"])
+    grid: bool = True
+    legend: bool = True
+    y_min: Optional[float] = None
+    y_max: Optional[float] = None
 
-    def __post_init__(self):
-        if self.graph is None:
-            self.graph = GraphConfig()
+
+@dataclass
+class ControlStyle:
+    """Control styling configuration"""
+    control_type: str = "slider"  # "slider", "dropdown", "spinbox"
+    min_value: Optional[float] = None
+    max_value: Optional[float] = None
+    step: Optional[float] = None
+    default_value: Optional[float] = None
+    show_value: bool = True
+    color: str = "#6464ff"
+    options: List[Dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass
+class GraphConfig:
+    """Graph configuration from panel.json"""
+    title: str
+    data_sources: List[str]
+    style: GraphStyle
+
+
+@dataclass
+class ControlConfig:
+    """Control configuration from panel.json"""
+    title: str
+    data_source: str
+    style: ControlStyle
 
 
 class MonitorConfig:
-    def __init__(self, config_file: str = "config.json"):
-        self.config_file = config_file
+    """Main configuration class handling both map.json and panel.json"""
+
+    def __init__(self, map_file: str = "map.json", panel_file: str = "panel.json"):
+        self.map_file = map_file
+        self.panel_file = panel_file
 
         # Connection settings
         self.openocd_host = "localhost"
         self.openocd_port = 4444
-
-        # OpenOCD settings
         self.auto_start_openocd = True
-        self.openocd_config_file = None
-        self.openocd_interface = "cmsis-dap"  # Changed from stlink-v2 to cmsis-dap
-        self.openocd_target = "stm32f4x"
-
-        # File settings
-        self.map_file = "firmware.map"
-
-        # Monitoring settings
         self.update_interval_ms = 100
-        self.graph_history_size = 1000
         self.time_window_seconds = 10.0
+        self.graph_history_size = 1000
 
-        # Motor settings
-        self.motor_to_monitor = 1  # Default motor is 1
-        self.motor_base_address = {
-            'motor_status_base': 0,
-            'pid_status_base': 64,
-            'write_pid_target_base': 0,
-            'write_pid_enable_base': 32,
-            'write_pid_kp_base': 64,
-            'write_pid_ki_base': 96,
-            'write_pid_kd_base': 128,
-            'write_pid_output_limit_base': 160,
-            'write_pid_mode_base': 192
-        }
+        # Structure names
+        self.read_struct_name = "monitor_read_data"
+        self.write_struct_name = "monitor_write_data"
 
-        # Struct names - now fully configurable
-        self.read_struct_name = "monitor_read"
-        self.write_struct_name = "monitor_write"
+        # Data structures
+        self.variables: Dict[str, VariableDefinition] = {}
+        self.graphs: Dict[str, GraphConfig] = {}
+        self.controls: Dict[str, ControlConfig] = {}
 
-        # Variables - now fully configurable via config.json
-        self.read_variables: List[VariableConfig] = []
-        self.write_variables: List[VariableConfig] = []
+        self._load_config()
 
-        self.load_config()
-
-    def _graph_config_to_dict(self, gc: GraphConfig) -> dict:
-        return asdict(gc)
-
-    def _dict_to_graph_config(self, data: dict) -> GraphConfig:
-        return GraphConfig(**data)
-
-    def _var_config_to_dict(self, var: VariableConfig) -> dict:
-        d = asdict(var)
-        d['type'] = var.type.name
-        d['graph'] = self._graph_config_to_dict(var.graph)
-        return d
-
-    def _dict_to_var_config(self, data: dict) -> VariableConfig:
-        var_type = VariableType[data['type']]
-        graph = self._dict_to_graph_config(data.get('graph', {}))
-        # Remove 'graph' and 'type' so they don't interfere with VariableConfig init
-        clean_data = {k: v for k, v in data.items() if k not in ['graph', 'type']}
-        return VariableConfig(
-            **clean_data,
-            type=var_type,
-            graph=graph
-        )
-
-    def load_config(self):
+    def _load_config(self):
+        """Load configuration from JSON files"""
         try:
-            with open(self.config_file, 'r') as f:
-                config = json.load(f)
+            # Load map.json
+            with open(self.map_file, 'r') as f:
+                map_data = json.load(f)
+                self._parse_map_data(map_data)
 
-            # Load all basic settings
-            for key in ['read_struct_name', 'write_struct_name', 'openocd_host',
-                       'openocd_port', 'update_interval_ms', 'graph_history_size',
-                       'time_window_seconds', 'map_file', 'auto_start_openocd',
-                       'openocd_config_file', 'openocd_interface', 'openocd_target',
-                       'motor_to_monitor']:
-                if key in config:
-                    setattr(self, key, config[key])
+            # Load panel.json
+            with open(self.panel_file, 'r') as f:
+                panel_data = json.load(f)
+                self._parse_panel_data(panel_data)
 
-            # Load motor base address
-            if 'motor_base_address' in config:
-                self.motor_base_address = config['motor_base_address']
-
-            # Load read variables
-            if 'read_variables' in config:
-                self.read_variables = [
-                    self._dict_to_var_config(v) for v in config['read_variables']
-                ]
-            else:
-                # Default read variables if not specified
-                self.read_variables = [
-                    VariableConfig("motor_speed", 0, VariableType.FLOAT, scale=1.0, unit="RPM",
-                                  graph=GraphConfig(color="#ff6464")),
-                    VariableConfig("temperature", 12, VariableType.FLOAT, scale=1.0, unit="°C",
-                                  graph=GraphConfig(color="#ffaa00")),
-                ]
-
-            # Load write variables
-            if 'write_variables' in config:
-                self.write_variables = [
-                    self._dict_to_var_config(v) for v in config['write_variables']
-                ]
-            else:
-                # Default write variables if not specified
-                self.write_variables = [
-                    VariableConfig("target_speed", 0, VariableType.FLOAT, writable=True,
-                                  min_val=0, max_val=5000, unit="RPM"),
-                    VariableConfig("enable_motor", 12, VariableType.UINT8, writable=True,
-                                  min_val=0, max_val=1, unit=""),
-                ]
-
-        except FileNotFoundError:
-            print(f"Config file {self.config_file} not found. Using defaults and creating new config.")
-            self.save_config()
+        except FileNotFoundError as e:
+            print(f"Configuration file not found: {e}")
+        except json.JSONDecodeError as e:
+            print(f"Invalid JSON in configuration: {e}")
         except Exception as e:
-            print(f"Error loading config: {e}")
+            print(f"Error loading configuration: {e}")
 
-    def save_config(self):
-        config = {
-            # Connection settings
-            'openocd_host': self.openocd_host,
-            'openocd_port': self.openocd_port,
+    def _parse_map_data(self, map_data: Dict[str, Any]):
+        """Parse map.json data into VariableDefinition objects"""
+        self.variables.clear()
 
-            # OpenOCD settings
-            'auto_start_openocd': self.auto_start_openocd,
-            'openocd_config_file': self.openocd_config_file,
-            'openocd_interface': self.openocd_interface,
-            'openocd_target': self.openocd_target,
+        for var_id, var_data in map_data.items():
+            try:
+                var = VariableDefinition(
+                    id=var_id,
+                    name=var_data.get('name', var_id),
+                    description=var_data.get('description', ''),
+                    type=DataType[var_data['type']],
+                    signed=var_data.get('signed', True),
+                    scale=var_data.get('scale', 1.0),
+                    unit=var_data.get('unit', ''),
+                    offset=var_data['offset'],
+                    field=var_data['field']
+                )
+                self.variables[var_id] = var
+            except (KeyError, ValueError) as e:
+                print(f"Error parsing variable {var_id}: {e}")
 
-            # File settings
-            'map_file': self.map_file,
+    def _parse_panel_data(self, panel_data: Dict[str, Any]):
+        """Parse panel.json data into GraphConfig and ControlConfig objects"""
+        self.graphs.clear()
+        self.controls.clear()
 
-            # Monitoring settings
-            'update_interval_ms': self.update_interval_ms,
-            'graph_history_size': self.graph_history_size,
-            'time_window_seconds': self.time_window_seconds,
+        # Parse graphs
+        for graph_id, graph_data in panel_data.get('graphs', {}).items():
+            try:
+                style_data = graph_data.get('style', {})
+                style = GraphStyle(
+                    title=style_data.get('title', graph_data.get('title', '')),
+                    x_label=style_data.get('x_label', 'Time (s)'),
+                    y_label=style_data.get('y_label', 'Value'),
+                    colors=style_data.get('colors', ["#ff6464", "#6464ff", "#64ff64", "#ff64ff", "#ffff64"]),
+                    grid=style_data.get('grid', True),
+                    legend=style_data.get('legend', True),
+                    y_min=style_data.get('y_min'),
+                    y_max=style_data.get('y_max')
+                )
 
-            # Motor settings
-            'motor_to_monitor': self.motor_to_monitor,
-            'motor_base_address': self.motor_base_address,
+                graph = GraphConfig(
+                    title=graph_data.get('title', graph_id),
+                    data_sources=graph_data.get('data_sources', []),
+                    style=style
+                )
+                self.graphs[graph_id] = graph
+            except Exception as e:
+                print(f"Error parsing graph {graph_id}: {e}")
 
-            # Struct names
-            'read_struct_name': self.read_struct_name,
-            'write_struct_name': self.write_struct_name,
+        # Parse controls
+        for control_id, control_data in panel_data.get('controls', {}).items():
+            try:
+                style_data = control_data.get('style', {})
+                style = ControlStyle(
+                    control_type=style_data.get('control_type', 'slider'),
+                    min_value=style_data.get('min_value'),
+                    max_value=style_data.get('max_value'),
+                    step=style_data.get('step'),
+                    default_value=style_data.get('default_value'),
+                    show_value=style_data.get('show_value', True),
+                    color=style_data.get('color', "#6464ff"),
+                    options=style_data.get('options', [])
+                )
 
-            # Variables
-            'read_variables': [self._var_config_to_dict(v) for v in self.read_variables],
-            'write_variables': [self._var_config_to_dict(v) for v in self.write_variables],
-        }
+                control = ControlConfig(
+                    title=control_data.get('title', control_id),
+                    data_source=control_data['data_source'],
+                    style=style
+                )
+                self.controls[control_id] = control
+            except Exception as e:
+                print(f"Error parsing control {control_id}: {e}")
 
-        # Ensure directory exists
-        os.makedirs(os.path.dirname(self.config_file) if os.path.dirname(self.config_file) else '.', exist_ok=True)
+    def get_variable_by_id(self, var_id: str) -> Optional[VariableDefinition]:
+        """Get variable definition by ID"""
+        return self.variables.get(var_id)
 
-        with open(self.config_file, 'w') as f:
-            json.dump(config, indent=2, fp=f)
+    def get_read_variables(self) -> List[VariableDefinition]:
+        """Get all read variables"""
+        return [var for var in self.variables.values() if var.field == "read"]
 
-    def calculate_motor_offsets(self, motor_id):
-        """Calculate offsets for the specified motor ID using base addresses"""
-        base = self.motor_base_address
+    def get_write_variables(self) -> List[VariableDefinition]:
+        """Get all write variables"""
+        return [var for var in self.variables.values() if var.field == "write"]
 
-        # Structure sizes
-        MOTOR_STATUS_SIZE = 8  # sizeof(motStat)
-        PID_STATUS_SIZE = 40   # sizeof(pidStat)
+    def add_graph(self, graph_id: str, title: str, data_sources: List[str], style: GraphStyle):
+        """Add a new graph configuration"""
+        self.graphs[graph_id] = GraphConfig(title=title, data_sources=data_sources, style=style)
 
-        # Motor status offsets (monitor_read_data.motors[motor_id])
-        motor_base_offset = base['motor_status_base'] + (motor_id * MOTOR_STATUS_SIZE)
+    def add_control(self, control_id: str, title: str, data_source: str, style: ControlStyle):
+        """Add a new control configuration"""
+        self.controls[control_id] = ControlConfig(title=title, data_source=data_source, style=style)
 
-        # PID status offsets (monitor_read_data.pids[motor_id])
-        pid_base_offset = base['pid_status_base'] + (motor_id * PID_STATUS_SIZE)
+    def save_panel_config(self):
+        """Save current panel configuration to panel.json"""
+        try:
+            panel_data = {
+                'graphs': {},
+                'controls': {}
+            }
 
-        # Write variable offsets (monitor_write_data)
-        write_pid_target_offset = base['write_pid_target_base'] + (motor_id * 4)  # 4 bytes per float
-        write_pid_kp_offset = base['write_pid_kp_base'] + (motor_id * 4)  # 4 bytes per float
-        write_pid_ki_offset = base['write_pid_ki_base'] + (motor_id * 4)  # 4 bytes per float
-        write_pid_kd_offset = base['write_pid_kd_base'] + (motor_id * 4)  # 4 bytes per float
-        write_pid_output_limit_offset = base['write_pid_output_limit_base'] + (motor_id * 4)  # 4 bytes per float
-        write_pid_mode_offset = base['write_pid_mode_base'] + motor_id  # 1 byte per enum
+            # Serialize graphs
+            for graph_id, graph in self.graphs.items():
+                panel_data['graphs'][graph_id] = {
+                    'title': graph.title,
+                    'data_sources': graph.data_sources,
+                    'style': {
+                        'title': graph.style.title,
+                        'x_label': graph.style.x_label,
+                        'y_label': graph.style.y_label,
+                        'colors': graph.style.colors,
+                        'grid': graph.style.grid,
+                        'legend': graph.style.legend,
+                        'y_min': graph.style.y_min,
+                        'y_max': graph.style.y_max
+                    }
+                }
 
-        return {
-            'motor_current': motor_base_offset + 0,
-            'motor_velocity': motor_base_offset + 2,
-            'motor_position': motor_base_offset + 4,
-            'motor_temperature': motor_base_offset + 6,
+            # Serialize controls
+            for control_id, control in self.controls.items():
+                panel_data['controls'][control_id] = {
+                    'title': control.title,
+                    'data_source': control.data_source,
+                    'style': {
+                        'control_type': control.style.control_type,
+                        'min_value': control.style.min_value,
+                        'max_value': control.style.max_value,
+                        'step': control.style.step,
+                        'default_value': control.style.default_value,
+                        'show_value': control.style.show_value,
+                        'color': control.style.color,
+                        'options': control.style.options
+                    }
+                }
 
-            'pid_kp': pid_base_offset + 0,
-            'pid_ki': pid_base_offset + 4,
-            'pid_kd': pid_base_offset + 8,
-            'pid_output_limit': pid_base_offset + 16,
-            'pid_mode': pid_base_offset + 20,  # mode is at offset 20 in pidStat
-            'pid_target': pid_base_offset + 32,  # target is at offset 32 in pidStat
+            with open(self.panel_file, 'w') as f:
+                json.dump(panel_data, f, indent=2)
 
-            'write_pid_target': write_pid_target_offset,
-            'write_pid_kp': write_pid_kp_offset,
-            'write_pid_ki': write_pid_ki_offset,
-            'write_pid_kd': write_pid_kd_offset,
-            'write_pid_output_limit': write_pid_output_limit_offset,
-            'write_pid_mode': write_pid_mode_offset
-        }
+        except Exception as e:
+            print(f"Error saving panel configuration: {e}")
+            raise
 
-    def update_motor_offsets(self, motor_id):
-        """Update motor ID - offsets are now calculated dynamically"""
-        self.motor_to_monitor = motor_id
+    def validate_configuration(self) -> List[str]:
+        """Validate configuration and return list of errors"""
+        errors = []
+
+        # Validate graphs
+        for graph_id, graph in self.graphs.items():
+            for data_source in graph.data_sources:
+                if data_source not in self.variables:
+                    errors.append(f"Graph '{graph_id}': Unknown data source '{data_source}'")
+                elif self.variables[data_source].field != "read":
+                    errors.append(f"Graph '{graph_id}': Data source '{data_source}' is not a read variable")
+
+        # Validate controls
+        for control_id, control in self.controls.items():
+            if control.data_source not in self.variables:
+                errors.append(f"Control '{control_id}': Unknown data source '{control.data_source}'")
+            elif self.variables[control.data_source].field != "write":
+                errors.append(f"Control '{control_id}': Data source '{control.data_source}' is not a write variable")
+
+        return errors
