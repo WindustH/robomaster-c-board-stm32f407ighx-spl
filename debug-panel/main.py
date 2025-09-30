@@ -18,6 +18,8 @@ from modules.data_monitor import DataMonitor
 from modules.openocd_interface import OpenOCDInterface
 from modules.graph_panel import GraphPanel
 from modules.control_panel import ControlPanel
+from modules.connection_panel import ConnectionPanel
+from modules.data_source_panel import DataSourcePanel
 
 
 class MotorMonitorGUI(QMainWindow):
@@ -33,6 +35,8 @@ class MotorMonitorGUI(QMainWindow):
         self.data_monitor = DataMonitor(self.config, self.parser)
 
         # Initialize panels
+        self.connection_panel = ConnectionPanel(self.config)
+        self.data_source_panel = DataSourcePanel(self.config)
         self.graph_panel = GraphPanel(self.config)
         self.control_panel = ControlPanel(self.config)
 
@@ -51,14 +55,33 @@ class MotorMonitorGUI(QMainWindow):
         # Main layout
         main_layout = QVBoxLayout(central_widget)
 
-        # Connection status
-        self.status_label = QLabel("Disconnected")
-        self.status_label.setStyleSheet("QLabel { color: red; font-weight: bold; }")
-        main_layout.addWidget(self.status_label)
+        # Connection panel at top
+        connection_group = self.connection_panel.create_connection_group()
+        main_layout.addWidget(connection_group)
 
-        # Connect button
-        self.connect_btn = QPushButton("Connect")
-        main_layout.addWidget(self.connect_btn)
+        # Tab widget for different panels
+        tab_widget = QTabWidget()
+
+        # Data source configuration tab
+        data_source_widget = self.data_source_panel.create_data_source_group()
+        tab_widget.addTab(data_source_widget, "Data Sources")
+
+        # Monitoring tab
+        monitoring_widget = self._create_monitoring_widget()
+        tab_widget.addTab(monitoring_widget, "Monitoring")
+
+        main_layout.addWidget(tab_widget)
+
+        # Load initial configuration
+        self.connection_panel.load_config_into_ui()
+
+        # Set monitored variables based on current graph configuration
+        self._update_monitored_variables()
+
+    def _create_monitoring_widget(self) -> QWidget:
+        """Create the monitoring tab widget"""
+        widget = QWidget()
+        layout = QHBoxLayout(widget)
 
         # Splitter for graph and control panels
         splitter = QSplitter(Qt.Horizontal)
@@ -72,19 +95,19 @@ class MotorMonitorGUI(QMainWindow):
         splitter.addWidget(control_group)
 
         splitter.setSizes([700, 300])
-        main_layout.addWidget(splitter)
+        layout.addWidget(splitter)
 
-        # Set monitored variables based on current graph configuration
-        self._update_monitored_variables()
+        return widget
 
     def _connect_signals(self) -> None:
         """Connect all signals and slots"""
-        # Connection button
-        self.connect_btn.clicked.connect(self._connect_to_target)
+        # Connection panel signals
+        self.connection_panel.connect_btn.clicked.connect(self._connect_to_target)
+        self.connection_panel.save_config_btn.clicked.connect(self._save_config)
 
         # Data monitor signals
         self.data_monitor.data_updated.connect(self._on_data_updated)
-        self.data_monitor.connection_status.connect(self._on_connection_status)
+        self.data_monitor.connection_status.connect(self.connection_panel.update_connection_status)
 
         # Control panel signals
         self.control_panel.connect_apply_buttons(self._on_control_apply)
@@ -92,6 +115,13 @@ class MotorMonitorGUI(QMainWindow):
     def _connect_to_target(self) -> None:
         """Connect to target device"""
         try:
+            # Save current UI configuration
+            self.connection_panel.save_config_from_ui()
+
+            # Update OpenOCD interface with new settings
+            self.openocd.host = self.config.openocd_host
+            self.openocd.port = self.config.openocd_port
+
             # Connect to OpenOCD
             if not self.openocd.connect():
                 QMessageBox.warning(self, "Connection Error", "Failed to connect to OpenOCD")
@@ -106,16 +136,14 @@ class MotorMonitorGUI(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Connection Error", f"Failed to connect: {e}")
 
-    def _on_connection_status(self, connected: bool) -> None:
-        """Handle connection status changes"""
-        if connected:
-            self.status_label.setText("Connected")
-            self.status_label.setStyleSheet("QLabel { color: green; font-weight: bold; }")
-            self.connect_btn.setText("Disconnect")
-        else:
-            self.status_label.setText("Disconnected")
-            self.status_label.setStyleSheet("QLabel { color: red; font-weight: bold; }")
-            self.connect_btn.setText("Connect")
+    def _save_config(self) -> None:
+        """Save configuration"""
+        try:
+            self.connection_panel.save_config_from_ui()
+            self.config.save_panel_config()
+            print("Configuration saved")
+        except Exception as e:
+            QMessageBox.critical(self, "Save Error", f"Failed to save configuration: {e}")
 
     def _on_data_updated(self, data: Dict[str, Dict[str, Any]]) -> None:
         """Handle new data from data monitor"""

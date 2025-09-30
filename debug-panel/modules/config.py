@@ -89,7 +89,7 @@ class MonitorConfig:
         self.openocd_host = "localhost"
         self.openocd_port = 4444
         self.auto_start_openocd = True
-        self.update_interval_ms = 100
+        self.update_interval_ms = 1
         self.time_window_seconds = 10.0
         self.graph_history_size = 1000
 
@@ -128,8 +128,16 @@ class MonitorConfig:
         """Parse map.json data into VariableDefinition objects"""
         self.variables.clear()
 
-        for var_id, var_data in map_data.items():
+        # Update structure names if provided
+        if 'read_struct_name' in map_data:
+            self.read_struct_name = map_data['read_struct_name']
+        if 'write_struct_name' in map_data:
+            self.write_struct_name = map_data['write_struct_name']
+
+        # Parse variables array
+        for var_data in map_data.get('variables', []):
             try:
+                var_id = var_data.get('id', '')
                 var = VariableDefinition(
                     id=var_id,
                     name=var_data.get('name', var_id),

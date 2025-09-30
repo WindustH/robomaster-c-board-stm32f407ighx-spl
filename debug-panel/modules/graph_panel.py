@@ -29,6 +29,13 @@ class GraphPanel:
 
     def _create_widgets(self):
         """Create all graph panel widgets"""
+        # Update interval control
+        self.update_interval_spin = QDoubleSpinBox()
+        self.update_interval_spin.setRange(0.001, 1000.0)
+        self.update_interval_spin.setValue(self.config.update_interval_ms)
+        self.update_interval_spin.setSuffix(" ms")
+        self.update_interval_spin.setDecimals(3)
+
         # Time window control
         self.time_window_spin = QDoubleSpinBox()
         self.time_window_spin.setRange(0.1, 3600.0)
@@ -50,6 +57,8 @@ class GraphPanel:
 
         # Controls
         controls_layout = QHBoxLayout()
+        controls_layout.addWidget(QLabel("Update Interval:"))
+        controls_layout.addWidget(self.update_interval_spin)
         controls_layout.addWidget(QLabel("Time Window:"))
         controls_layout.addWidget(self.time_window_spin)
         controls_layout.addWidget(self.auto_fit_cb)
@@ -66,6 +75,7 @@ class GraphPanel:
         layout.addWidget(scroll)
 
         # Connect signals
+        self.update_interval_spin.valueChanged.connect(self._on_update_interval_changed)
         self.time_window_spin.valueChanged.connect(self.update_all_graphs)
         self.auto_fit_cb.toggled.connect(self.update_all_graphs)
         self.clear_btn.clicked.connect(self.clear_history)
@@ -230,3 +240,7 @@ class GraphPanel:
         for graph in self.config.graphs.values():
             all_sources.extend(graph.data_sources)
         return list(set(all_sources))  # Remove duplicates
+
+    def _on_update_interval_changed(self):
+        """Handle update interval changes"""
+        self.config.update_interval_ms = self.update_interval_spin.value()

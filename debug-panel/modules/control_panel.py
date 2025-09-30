@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QGroupBox, QVBoxLayout, QHBoxLayout, QGridLayout,
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 
-from modules.config import MonitorConfig, ControlConfig, VariableDefinition
+from modules.config import MonitorConfig, ControlConfig, VariableDefinition, ControlStyle
 
 
 class ControlPanel:

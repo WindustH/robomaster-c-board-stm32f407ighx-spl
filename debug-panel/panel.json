@@ -1,162 +1,201 @@
 {
-  "graphs": [
-    {
-      "id": "graph_motor_current",
+  "graphs": {
+    "graph_motor_current": {
       "title": "Motor Current",
-      "data_sources": ["motor_0_current", "motor_1_current"],
+      "data_sources": [
+        "motor_0_current",
+        "motor_1_current"
+      ],
       "style": {
-        "colors": ["#ff6464", "#6464ff"],
-        "y_min": -20000,
-        "y_max": 20000,
+        "title": "Motor Current",
+        "x_label": "Time (s)",
         "y_label": "Current (mA)",
-        "x_label": "Time (s)",
+        "colors": [
+          "#ff6464",
+          "#6464ff"
+        ],
+        "grid": true,
         "legend": true,
-        "grid": true
+        "y_min": -20000,
+        "y_max": 20000
       }
     },
-    {
-      "id": "graph_motor_velocity",
+    "graph_motor_velocity": {
       "title": "Motor Velocity",
-      "data_sources": ["motor_0_velocity", "motor_1_velocity"],
+      "data_sources": [
+        "motor_0_velocity",
+        "motor_1_velocity"
+      ],
       "style": {
-        "colors": ["#64ff64", "#ff64ff"],
-        "y_min": -10000,
-        "y_max": 10000,
+        "title": "Motor Velocity",
+        "x_label": "Time (s)",
         "y_label": "Velocity (RPM)",
-        "x_label": "Time (s)",
+        "colors": [
+          "#64ff64",
+          "#ff64ff"
+        ],
+        "grid": true,
         "legend": true,
-        "grid": true
+        "y_min": -10000,
+        "y_max": 10000
       }
     },
-    {
-      "id": "graph_motor_position",
+    "graph_motor_position": {
       "title": "Motor Position",
-      "data_sources": ["motor_0_position", "motor_1_position"],
+      "data_sources": [
+        "motor_0_position",
+        "motor_1_position"
+      ],
       "style": {
-        "colors": ["#6464ff", "#ffff64"],
-        "y_min": -32768,
-        "y_max": 32767,
+        "title": "Motor Position",
+        "x_label": "Time (s)",
         "y_label": "Position (deg)",
-        "x_label": "Time (s)",
+        "colors": [
+          "#6464ff",
+          "#ffff64"
+        ],
+        "grid": true,
         "legend": true,
-        "grid": true
+        "y_min": -32768,
+        "y_max": 32767
       }
     },
-    {
-      "id": "graph_motor_temperature",
+    "graph_motor_temperature": {
       "title": "Motor Temperature",
-      "data_sources": ["motor_0_temperature", "motor_1_temperature"],
+      "data_sources": [
+        "motor_0_temperature",
+        "motor_1_temperature"
+      ],
       "style": {
-        "colors": ["#ffaa00", "#00aaff"],
-        "y_min": 0,
-        "y_max": 120,
-        "y_label": "Temperature (°C)",
+        "title": "Motor Temperature",
         "x_label": "Time (s)",
+        "y_label": "Temperature (\u00b0C)",
+        "colors": [
+          "#ffaa00",
+          "#00aaff"
+        ],
+        "grid": true,
         "legend": true,
-        "grid": true
+        "y_min": 0,
+        "y_max": 120
       }
     },
-    {
-      "id": "graph_pid_target",
+    "graph_pid_target": {
       "title": "PID Target",
-      "data_sources": ["pid_0_target"],
+      "data_sources": [
+        "pid_0_target"
+      ],
       "style": {
-        "colors": ["#ffaa64"],
-        "y_min": -1000,
-        "y_max": 1000,
-        "y_label": "Target Value",
+        "title": "PID Target",
         "x_label": "Time (s)",
+        "y_label": "Target Value",
+        "colors": [
+          "#ffaa64"
+        ],
+        "grid": true,
         "legend": false,
-        "grid": true
+        "y_min": -1000,
+        "y_max": 1000
       }
     }
-  ],
-  "controls": [
-    {
-      "id": "control_pid_0_target",
+  },
+  "controls": {
+    "control_pid_0_target": {
       "title": "PID 0 Target",
       "data_source": "write_pid_0_target",
       "style": {
         "control_type": "slider",
-        "color": "#ffaa64",
         "min_value": -1000,
         "max_value": 1000,
         "step": 1,
         "default_value": 0,
-        "show_value": true
+        "show_value": true,
+        "color": "#ffaa64",
+        "options": []
       }
     },
-    {
-      "id": "control_pid_0_kp",
+    "control_pid_0_kp": {
       "title": "PID 0 Kp",
       "data_source": "write_pid_0_kp",
       "style": {
         "control_type": "slider",
-        "color": "#64ff64",
         "min_value": 0,
         "max_value": 10,
         "step": 0.1,
         "default_value": 1.0,
-        "show_value": true
+        "show_value": true,
+        "color": "#64ff64",
+        "options": []
       }
     },
-    {
-      "id": "control_pid_0_ki",
+    "control_pid_0_ki": {
       "title": "PID 0 Ki",
       "data_source": "write_pid_0_ki",
       "style": {
         "control_type": "slider",
-        "color": "#6464ff",
         "min_value": 0,
         "max_value": 5,
         "step": 0.01,
         "default_value": 0.1,
-        "show_value": true
+        "show_value": true,
+        "color": "#6464ff",
+        "options": []
       }
     },
-    {
-      "id": "control_pid_0_kd",
+    "control_pid_0_kd": {
       "title": "PID 0 Kd",
       "data_source": "write_pid_0_kd",
       "style": {
         "control_type": "slider",
-        "color": "#ff64ff",
         "min_value": 0,
         "max_value": 2,
         "step": 0.01,
         "default_value": 0.01,
-        "show_value": true
+        "show_value": true,
+        "color": "#ff64ff",
+        "options": []
       }
     },
-    {
-      "id": "control_pid_0_output_limit",
+    "control_pid_0_output_limit": {
       "title": "PID 0 Output Limit",
       "data_source": "write_pid_0_output_limit",
       "style": {
         "control_type": "slider",
-        "color": "#ffff64",
         "min_value": 0,
         "max_value": 1000,
         "step": 10,
         "default_value": 1000,
-        "show_value": true
+        "show_value": true,
+        "color": "#ffff64",
+        "options": []
       }
     },
-    {
-      "id": "control_pid_0_mode",
+    "control_pid_0_mode": {
       "title": "PID 0 Mode",
       "data_source": "write_pid_0_mode",
       "style": {
         "control_type": "dropdown",
+        "min_value": null,
+        "max_value": null,
+        "step": null,
+        "default_value": 1,
+        "show_value": true,
         "color": "#64ffff",
         "options": [
-          {"value": 0, "label": "Position"},
-          {"value": 1, "label": "Velocity"},
-          {"value": 2, "label": "Current"}
-        ],
-        "default_value": 1,
-        "show_value": true
+          {
+            "value": 0,
+            "label": "Position"
+          },
+          {
+            "value": 1,
+            "label": "Velocity"
+          },
+          {
+            "value": 2,
+            "label": "Current"
+          }
+        ]
       }
     }
-  ]
+  }
 }
