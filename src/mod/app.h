@@ -4,18 +4,32 @@
 typedef struct {
   void (*setup)();
   void (*update)();
-  void (*reset)(u8 motor_id);
-  void (*enable)(u8 motor_id);
-  void (*disable)(u8 motor_id);
-  void (*set_target)(u8 motor_id, f32 target);
-  void (*set_kp)(u8 motor_id, f32 kp);
-  void (*set_ki)(u8 motor_id, f32 ki);
-  void (*set_kd)(u8 motor_id, f32 kd);
-  void (*set_output_limit)(u8 motor_id, f32 output_limit);
-  void (*set_mode)(u8 motor_id, pidMode mode);
-  pidStat *(*status)(u8 motor_id);
-} _PidMod;
-extern const _PidMod _pid;
+  void (*reset)();
+  void (*enable)();
+  void (*disable)();
+  void (*set_target)(f32 target);
+  void (*set_kp)(f32 kp);
+  void (*set_ki)(f32 ki);
+  void (*set_kd)(f32 kd);
+  void (*set_output_limit)(f32 output_limit);
+  volatile pidStat *(*status)();
+} _PidvMod;
+extern const _PidvMod _pidv;
+
+typedef struct {
+  void (*setup)();
+  void (*update)();
+  void (*reset)();
+  void (*enable)();
+  void (*disable)();
+  void (*set_target)(f32 target);
+  void (*set_kp)(f32 kp);
+  void (*set_ki)(f32 ki);
+  void (*set_kd)(f32 kd);
+  void (*set_output_limit)(f32 output_limit);
+  volatile pidStat *(*status)();
+} _PidxMod;
+extern const _PidxMod _pidx;
 
 typedef struct {
   void (*update)();
@@ -32,7 +46,8 @@ extern const _MonMod _mon;
 
 typedef struct {
   void (*init)();
-  _PidMod pid;
+  _PidvMod pidv;
+  _PidxMod pidx;
   _MonMod mon;
   _TickMod tick;
 } _AppMod;

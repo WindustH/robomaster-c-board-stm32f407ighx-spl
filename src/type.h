@@ -64,43 +64,41 @@ typedef struct {
   u8 T;   // Temperature
 } motStat;
 
-typedef enum { PID_POSITION, PID_VELOCITY, PID_CURRENT } pidMode;
-
 typedef struct {
   f32 kp;           // Proportional gain
   f32 ki;           // Integral gain
   f32 kd;           // Derivative gain
   f32 dt;           // Time step (seconds)
   f32 output_limit; // Output saturation limit
-  pidMode mode;     // Control mode
 
-  f32 integral;   // Integral accumulator
+  f32 target; // Target value
+  f32 p;
+  f32 i;
+  f32 d;
+
   f32 prev_error; // Previous error for derivative
-  f32 target;     // Target value
-  u8 enabled;     // Controller enabled flag
+
+  u8 enabled; // Controller enabled flag
 } pidStat;
 
-// Monitor read structure - all data we want to read from the system
 typedef struct {
-  // Motor status for all 8 motors
-  motStat motors[8];
-
-  // PID status for all 8 motors
-  pidStat pids[8];
-
-  // System timestamp
-  u32 timestamp;
+  motStat motors;
+  pidStat pidv;
+  pidStat pidx;
 } monRead;
 
-// Monitor write structure - all data we want to write to the system
 typedef struct {
-  // PID target values for all 8 motors
-  f32 pid_targets[8];
+  f32 pidv_target;
+  f32 pidv_kp;
+  f32 pidv_ki;
+  f32 pidv_kd;
+  f32 pidv_ol;
+  u8 pidv_enabled;
 
-  // PID parameters for all 8 motors
-  f32 pid_kp[8];
-  f32 pid_ki[8];
-  f32 pid_kd[8];
-  f32 pid_output_limit[8];
-  pidMode pid_mode[8];
+  f32 pidx_target;
+  f32 pidx_kp;
+  f32 pidx_ki;
+  f32 pidx_kd;
+  f32 pidx_ol;
+  u8 pidx_enabled;
 } monWrite;

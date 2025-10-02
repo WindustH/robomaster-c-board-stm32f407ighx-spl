@@ -566,9 +566,14 @@
               <FilePath>..\src\app\mon.c</FilePath>
             </File>
             <File>
-              <FileName>pid.c</FileName>
+              <FileName>pidv.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\src\app\pid.c</FilePath>
+              <FilePath>..\src\app\pidv.c</FilePath>
+            </File>
+            <File>
+              <FileName>pidx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\app\pidx.c</FilePath>
             </File>
             <File>
               <FileName>tick.c</FileName>
@@ -644,6 +649,16 @@
               <FileName>modu.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\src\utils\modu.h</FilePath>
+            </File>
+            <File>
+              <FileName>pid_assist.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\utils\pid_assist.c</FilePath>
+            </File>
+            <File>
+              <FileName>pid_assist.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\src\utils\pid_assist.h</FilePath>
             </File>
           </Files>
         </Group>

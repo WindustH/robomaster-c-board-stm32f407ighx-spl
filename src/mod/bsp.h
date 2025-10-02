@@ -57,8 +57,8 @@ extern const _CanMod _can;
 
 typedef struct {
   void (*setup)(void);
-  u8 (*set_current)(u8 motor_id, i16 current);
-  motStat (*status)(u8 motor_id);
+  u8 (*set_current)(i16 current);
+  const volatile motStat *(*status)();
   void (*send_ctrl_signal)();
   void (*update_status)(canRxH *rx_header, u8 *data);
 } _MotorMod;

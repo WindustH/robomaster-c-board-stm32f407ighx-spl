@@ -29,21 +29,20 @@ int main() {
   // bsp.motor.set(1, 500);
   // Configure PID controller for motor 1
 
-  app.pid.setup();
-  app.pid.set_kp(5, 0.02f);
-  app.pid.set_ki(5, 0.2f);
-  app.pid.set_kd(5, 0.0f);
-  app.pid.set_output_limit(5, 1000.0f);
-  app.pid.set_mode(5, PID_POSITION);
-  app.pid.enable(5);
-  app.pid.set_target(5, 300);
-  bsp.motor.set_current(5, 500);
+  app.pidv.setup();
+  app.pidv.set_kp(0.02f);
+  app.pidv.set_ki(0.2f);
+  app.pidv.set_kd(0.0f);
+  app.pidv.set_output_limit(1000.0f);
+  app.pidv.enable();
+  app.pidv.set_target(300);
+  bsp.motor.set_current(500);
   bsp.led.show(0xffffffff);
 
   bsp.cron.add_job(app.tick.update);
   bsp.cron.add_job(bsp.motor.send_ctrl_signal);
   // bsp.cron.add_job(app.mon.update);
-  bsp.cron.add_job(app.pid.update);
+  bsp.cron.add_job(app.pidv.update);
 
   bsp.can.bind_rx_callback(bsp.motor.update_status);
 

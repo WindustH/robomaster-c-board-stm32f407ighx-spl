@@ -7,3 +7,4 @@
 #define USART_BAUD_RATE 38400U
 #define TIM3_PRESCALER 839
 #define TIM3_PERIOD 99
+#define MOTOR_ID 0

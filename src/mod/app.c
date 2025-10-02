@@ -6,7 +6,8 @@ _AppMod app = {
 };
 
 static void init_app_mod() {
-  app.pid = _pid;
+  app.pidv = _pidv;
+  app.pidx = _pidx;
   app.mon = _mon;
   app.tick = _tick;
 }

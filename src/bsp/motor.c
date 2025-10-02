@@ -43,17 +43,17 @@ static void setup_motor(void) {
 }
 
 // Set target current for a specific motor (non-blocking, just update target)
-static u8 set_current_impl(u8 motor_id, i16 current) {
-  if (motor_id > 7) {
+static u8 set_current_impl(i16 current) {
+  if (MOTOR_ID > 7) {
     return 1; // Invalid motor ID
   }
-  motor_current_targets[motor_id] = current;
+  motor_current_targets[MOTOR_ID] = current;
   return 0; // Success
 }
 
 // Transmit the current target currents to all motors
 // Call this periodically (e.g., in control loop at 1kHz)
-void motor_transmit(void) {
+void motor_transmit() {
   canTxH tx_header;
   u8 tx_data_1_4[8];
   u8 tx_data_5_8[8];
@@ -94,7 +94,9 @@ void motor_transmit(void) {
 }
 
 // Read function - read feedback from motor
-static motStat read_feedback(u8 motor_id) { return motor_status[motor_id]; }
+static const volatile motStat *read_feedback() {
+  return &motor_status[MOTOR_ID];
+}
 
 // Function to update motor feedback from CAN messages
 // Call this from CAN RX interrupt handler
