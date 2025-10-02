@@ -114,13 +114,17 @@ static void bind_proc_msg_func(void (*cb)(canRxH *rx_header, u8 *data)) {
 static void unbind_proc_msg_func() { proc_can_msg_func_bound = 0; }
 
 void CAN1_RX0_IRQHandler(void) {
-  u8 rxData[8];
-  canRxH rxHeader;
+  if (CAN1->RF0R & CAN_RF0R_FOVR0) {
+    CAN1->RF0R |= CAN_RF0R_FOVR0;
+  }
 
-  if ((CAN1->RF0R & CAN_RF0R_FMP0) != 0) {
+  while ((CAN1->RF0R & CAN_RF0R_FMP0) != 0) {
+    u8 rxData[8];
+    canRxH rxHeader;
     bsp.can.read(&rxHeader, rxData);
-    if (proc_can_msg_func_bound)
+    if (proc_can_msg_func_bound) {
       proc_can_msg(&rxHeader, rxData);
+    }
   }
 }
 

@@ -27,7 +27,9 @@ static void set_target_impl(f32 target) {
 
 static void pid_enable() {
   pid_controllers[MOTOR_ID].enabled = 1;
+  pid_controllers[MOTOR_ID].p = 0.0f;
   pid_controllers[MOTOR_ID].i = 0.0f;
+  pid_controllers[MOTOR_ID].d = 0.0f;
   pid_controllers[MOTOR_ID].prev_error = 0.0f;
 }
 
@@ -36,7 +38,7 @@ static void pid_disable() { pid_controllers[MOTOR_ID].enabled = 0; }
 static void pid_update() {
   if (!pid_controllers[MOTOR_ID].enabled)
     return;
-  f32 output = pid_compute(app.pidv.status(), bsp.motor.status()->v);
+  f32 output = pid_compute(app.pidv.status(), (f32)bsp.motor.status()->v);
   i16 current = (i16)output;
   bsp.motor.set_current(current);
 }
@@ -68,4 +70,4 @@ const _PidvMod _pidv = {.setup = pid_setup,
                         .set_kp = set_kp_impl,
                         .set_ki = set_ki_impl,
                         .set_kd = set_kd_impl,
-                        .set_output_limit = set_output_limit_impl};
+                        .set_ol = set_output_limit_impl};

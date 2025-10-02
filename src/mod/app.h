@@ -11,7 +11,7 @@ typedef struct {
   void (*set_kp)(f32 kp);
   void (*set_ki)(f32 ki);
   void (*set_kd)(f32 kd);
-  void (*set_output_limit)(f32 output_limit);
+  void (*set_ol)(f32 output_limit);
   volatile pidStat *(*status)();
 } _PidvMod;
 extern const _PidvMod _pidv;
@@ -26,7 +26,7 @@ typedef struct {
   void (*set_kp)(f32 kp);
   void (*set_ki)(f32 ki);
   void (*set_kd)(f32 kd);
-  void (*set_output_limit)(f32 output_limit);
+  void (*set_ol)(f32 output_limit);
   volatile pidStat *(*status)();
 } _PidxMod;
 extern const _PidxMod _pidx;
@@ -39,8 +39,8 @@ extern const _TickMod _tick;
 
 typedef struct {
   void (*update)();
-  monRead *read;
-  monWrite *write;
+  volatile monRead *read;
+  volatile monWrite *write;
 } _MonMod;
 extern const _MonMod _mon;
 

@@ -1,3 +1,4 @@
+#include "def.h"
 #include "mod/bsp.h"
 #include "stm32f4xx.h"
 #include "type.h"
@@ -19,10 +20,10 @@ static void setup_motor(void) {
 
   // Configure filter banks 0-3 for IDs 0x201-0x208 (32-bit identifier list
   // mode)
-  CAN1->sFilterRegister[0].FR1 = (0x201U << 5) | ((0x202U << 5) << 16);
-  CAN1->sFilterRegister[1].FR1 = (0x203U << 5) | ((0x204U << 5) << 16);
-  CAN1->sFilterRegister[2].FR1 = (0x205U << 5) | ((0x206U << 5) << 16);
-  CAN1->sFilterRegister[3].FR1 = (0x207U << 5) | ((0x208U << 5) << 16);
+  CAN1->sFilterRegister[0].FR1 = (0x201U << 21) | (0x202U << 5);
+  CAN1->sFilterRegister[1].FR1 = (0x203U << 21) | (0x204U << 5);
+  CAN1->sFilterRegister[2].FR1 = (0x205U << 21) | (0x206U << 5);
+  CAN1->sFilterRegister[3].FR1 = (0x207U << 21) | (0x208U << 5);
 
   // Set banks 0-3 to 32-bit scale
   CAN1->FS1R |= CAN_FS1R_FSC0 | CAN_FS1R_FSC1 | CAN_FS1R_FSC2 | CAN_FS1R_FSC3;
@@ -44,9 +45,6 @@ static void setup_motor(void) {
 
 // Set target current for a specific motor (non-blocking, just update target)
 static u8 set_current_impl(i16 current) {
-  if (MOTOR_ID > 7) {
-    return 1; // Invalid motor ID
-  }
   motor_current_targets[MOTOR_ID] = current;
   return 0; // Success
 }
@@ -89,7 +87,6 @@ void motor_transmit() {
   if (bsp.can.send(&tx_header, tx_data_5_8, &unused_mailbox) != 0) {
     return; // Failed to send
   }
-
   return; // Success
 }
 
@@ -100,8 +97,7 @@ static const volatile motStat *read_feedback() {
 
 // Function to update motor feedback from CAN messages
 // Call this from CAN RX interrupt handler
-void motor_update_feedback(canRxH *rx_header, u8 *data) {
-
+static void motor_update_feedback(canRxH *rx_header, u8 *data) {
   u32 std_id = rx_header->StdId;
   if (std_id >= 0x201U && std_id <= 0x208U) {
     u8 motor_id = (u8)(std_id - 0x200U) - 1; // 1 to 8
@@ -113,11 +109,12 @@ void motor_update_feedback(canRxH *rx_header, u8 *data) {
     // DATA[6]: Motor temperature (°C)
     // DATA[7]: Null
 
-    motor_status[motor_id].th = (i16)((data[0] << 8) | data[1]);
+    motor_status[motor_id].th = (u16)((data[0] << 8) | data[1]);
     motor_status[motor_id].v = (i16)((data[2] << 8) | data[3]);
     motor_status[motor_id].i = (i16)((data[4] << 8) | data[5]);
     motor_status[motor_id].T = data[6];
   }
+  // bsp.led.show(0x00FFFFFF);
 }
 
 // Export the motor module

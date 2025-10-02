@@ -60,7 +60,7 @@ typedef struct {
 typedef struct {
   i16 i;  // Actual current
   i16 v;  // Actual velocity (rpm)
-  i16 th; // Actual position (angle)
+  u16 th; // Actual position (angle)
   u8 T;   // Temperature
 } motStat;
 
@@ -82,7 +82,7 @@ typedef struct {
 } pidStat;
 
 typedef struct {
-  motStat motors;
+  motStat motor;
   pidStat pidv;
   pidStat pidx;
 } monRead;

@@ -14,11 +14,11 @@ f32 pid_compute(volatile pidStat *const pid, const f32 feedback) {
   pid->i += pid->p * pid->dt;
 
   // Clamp integral to prevent windup
-  f32 max_integral = pid->output_limit / (pid->ki + 1e-6f);
-  if (pid->i > max_integral)
-    pid->i = max_integral;
-  if (pid->i < -max_integral)
-    pid->i = -max_integral;
+  // f32 max_integral = pid->output_limit / (pid->ki + 1e-6f);
+  // if (pid->i > max_integral)
+  //   pid->i = max_integral;
+  // if (pid->i < -max_integral)
+  //   pid->i = -max_integral;
 
   f32 integral = pid->ki * pid->i;
 

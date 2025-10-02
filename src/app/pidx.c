@@ -67,4 +67,4 @@ const _PidxMod _pidx = {.setup = pid_setup,
                         .set_kp = set_kp_impl,
                         .set_ki = set_ki_impl,
                         .set_kd = set_kd_impl,
-                        .set_output_limit = set_output_limit_impl};
+                        .set_ol = set_output_limit_impl};
