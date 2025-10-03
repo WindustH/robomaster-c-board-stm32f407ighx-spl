@@ -38,6 +38,7 @@ typedef struct {
 extern const _TickMod _tick;
 
 typedef struct {
+  void (*setup)();
   void (*update)();
   volatile monRead *read;
   volatile monWrite *write;

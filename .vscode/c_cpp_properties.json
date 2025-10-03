@@ -2,7 +2,7 @@
     "configurations": [
         {
             "name": "STM32",
-            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "compilerPath": "arm-none-eabi-gcc",
             "cStandard": "c23",
             "cppStandard": "c++23",
             "intelliSenseMode": "linux-gcc-arm"

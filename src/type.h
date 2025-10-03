@@ -60,7 +60,7 @@ typedef struct {
 typedef struct {
   i16 i;  // Actual current
   i16 v;  // Actual velocity (rpm)
-  u16 th; // Actual position (angle)
+  f32 th; // Actual position (angle)
   u8 T;   // Temperature
 } motStat;
 

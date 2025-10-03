@@ -8,3 +8,5 @@
 #define TIM3_PRESCALER 839
 #define TIM3_PERIOD 99
 #define MOTOR_ID 0
+#define ENCODER_ROUND 8191
+#define MAX_CURRENT 16384

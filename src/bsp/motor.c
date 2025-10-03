@@ -44,14 +44,14 @@ static void setup_motor(void) {
 }
 
 // Set target current for a specific motor (non-blocking, just update target)
-static u8 set_current_impl(i16 current) {
+static u8 set_motor_current(i16 current) {
   motor_current_targets[MOTOR_ID] = current;
   return 0; // Success
 }
 
 // Transmit the current target currents to all motors
 // Call this periodically (e.g., in control loop at 1kHz)
-void motor_transmit() {
+void send_motor_ctrl_msg() {
   canTxH tx_header;
   u8 tx_data_1_4[8];
   u8 tx_data_5_8[8];
@@ -97,8 +97,9 @@ static const volatile motStat *read_feedback() {
 
 // Function to update motor feedback from CAN messages
 // Call this from CAN RX interrupt handler
-static void motor_update_feedback(canRxH *rx_header, u8 *data) {
+static void update_motor_feedback(canRxH *rx_header, u8 *data) {
   u32 std_id = rx_header->StdId;
+  static u16 pre_motor_th[8] = {0};
   if (std_id >= 0x201U && std_id <= 0x208U) {
     u8 motor_id = (u8)(std_id - 0x200U) - 1; // 1 to 8
 
@@ -108,8 +109,18 @@ static void motor_update_feedback(canRxH *rx_header, u8 *data) {
     // DATA[4-5]: Actual torque current
     // DATA[6]: Motor temperature (°C)
     // DATA[7]: Null
+    u16 raw_th = (u16)((data[0] << 8) | data[1]);
+    i16 delta;
+    if (pre_motor_th[motor_id] > raw_th &&
+        pre_motor_th[motor_id] - raw_th > ENCODER_ROUND / 2)
+      delta = ENCODER_ROUND + raw_th - pre_motor_th[motor_id];
+    else if (raw_th - pre_motor_th[motor_id] > ENCODER_ROUND / 2)
+      delta = raw_th - ENCODER_ROUND - pre_motor_th[motor_id];
+    else
+      delta = raw_th - pre_motor_th[motor_id];
+    pre_motor_th[motor_id] = raw_th;
 
-    motor_status[motor_id].th = (u16)((data[0] << 8) | data[1]);
+    motor_status[motor_id].th += (delta * 2.0f * PI) / (ENCODER_ROUND * 1.0f);
     motor_status[motor_id].v = (i16)((data[2] << 8) | data[3]);
     motor_status[motor_id].i = (i16)((data[4] << 8) | data[5]);
     motor_status[motor_id].T = data[6];
@@ -120,7 +131,7 @@ static void motor_update_feedback(canRxH *rx_header, u8 *data) {
 // Export the motor module
 const _MotorMod _motor = {.setup = setup_motor,
                           .set_current =
-                              set_current_impl, // Sets target current
+                              set_motor_current, // Sets target current
                           .status = read_feedback,
-                          .send_ctrl_signal = motor_transmit,
-                          .update_status = motor_update_feedback};
+                          .send_ctrl_signal = send_motor_ctrl_msg,
+                          .update_status = update_motor_feedback};

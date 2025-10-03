@@ -641,16 +641,6 @@
               <FilePath>..\src\utils\map.h</FilePath>
             </File>
             <File>
-              <FileName>modu.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\utils\modu.c</FilePath>
-            </File>
-            <File>
-              <FileName>modu.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\src\utils\modu.h</FilePath>
-            </File>
-            <File>
               <FileName>pid_assist.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\utils\pid_assist.c</FilePath>
