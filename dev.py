@@ -14,7 +14,7 @@ from typing import List, Optional
 # Configuration
 PROJECT_NAME = "stm32f407ighx"
 TARGET_CFG = "stm32f4x.cfg"
-OPENOCD_INTERFACES = ["stlink.cfg", "cmsis-dap.cfg", "jlink.cfg", "stlink-v2.cfg", "stlink-v2-1.cfg"]
+OPENOCD_INTERFACES = ["cmsis-dap.cfg", "jlink.cfg", "stlink-v2.cfg", "stlink-v2-1.cfg"]
 DEFAULT_BUILD_TYPE = "Release"
 
 
@@ -37,7 +37,7 @@ class Color:
                 setattr(cls, attr, "")
 
 
-# Disable colors on non-TTY
+# Disable colors on non-TTY or Windows
 if not sys.stdout.isatty() or os.name == "nt":
     Color.disable()
 
@@ -116,46 +116,38 @@ class ProjectManager:
             raise
 
     def _find_interface(self) -> Optional[str]:
-        """Detect connected programmer using lsusb, similar to dev.sh"""
-        try:
-            # Run lsusb to detect connected devices
-            result = subprocess.run(["lsusb"], capture_output=True, text=True, check=True)
-            lsusb_output = result.stdout
+        """Detect connected programmer. Skip lsusb on Windows."""
+        if os.name != "nt":
+            try:
+                result = subprocess.run(["lsusb"], capture_output=True, text=True, check=True)
+                lsusb_output = result.stdout
 
-            # Check for specific device IDs, similar to dev.sh
-            if "0483:3748" in lsusb_output:
-                print_status("Detected ST-Link v2", "success")
-                return "stlink-v2.cfg"
-            elif "0483:374b" in lsusb_output:
-                print_status("Detected ST-Link v2-1", "success")
-                return "stlink-v2-1.cfg"
-            elif "0d28:0204" in lsusb_output:
-                print_status("Detected CMSIS-DAP", "success")
-                return "cmsis-dap.cfg"
-            else:
-                # Fall back to the original method if no known device is found
-                print_status("No known programmer detected via lsusb, trying OpenOCD test...", "warning")
-                for interface in OPENOCD_INTERFACES:
-                    test_cmd = ["openocd", "-f", f"interface/{interface}", "-c", "exit"]
-                    try:
-                        result = self._run_command(test_cmd, check=False, capture_output=True)
-                        if result.returncode == 0:
-                            print_status(f"Found interface: {interface}", "success")
-                            return interface
-                    except Exception:
-                        continue
-        except Exception as e:
-            print_status(f"Failed to run lsusb: {e}", "warning")
-            # Fall back to the original method
-            for interface in OPENOCD_INTERFACES:
-                test_cmd = ["openocd", "-f", f"interface/{interface}", "-c", "exit"]
-                try:
-                    result = self._run_command(test_cmd, check=False, capture_output=True)
-                    if result.returncode == 0:
-                        print_status(f"Found interface: {interface}", "success")
-                        return interface
-                except Exception:
-                    continue
+                if "0483:3748" in lsusb_output:
+                    print_status("Detected ST-Link v2", "success")
+                    return "stlink-v2.cfg"
+                elif "0483:374b" in lsusb_output:
+                    print_status("Detected ST-Link v2-1", "success")
+                    return "stlink-v2-1.cfg"
+                elif "0d28:0204" in lsusb_output:
+                    print_status("Detected CMSIS-DAP", "success")
+                    return "cmsis-dap.cfg"
+                else:
+                    print_status("No known programmer detected via lsusb, trying OpenOCD test...", "warning")
+            except Exception as e:
+                print_status(f"Failed to run lsusb: {e}", "warning")
+        else:
+            print_status("Skipping lsusb on Windows, trying OpenOCD test...", "info")
+
+        # Fallback: test each OpenOCD interface
+        for interface in OPENOCD_INTERFACES:
+            test_cmd = ["openocd", "-f", f"interface/{interface}", "-c", "exit"]
+            try:
+                result = self._run_command(test_cmd, check=False, capture_output=True)
+                if result.returncode == 0:
+                    print_status(f"Found interface: {interface}", "success")
+                    return interface
+            except Exception:
+                continue
         return None
 
     def build(self, build_type: str = DEFAULT_BUILD_TYPE):
@@ -181,29 +173,7 @@ class ProjectManager:
             print_status("ELF file not generated!", "error")
             sys.exit(1)
 
-        # Run keil converter to generate keil project files
-        self._run_keil_converter()
-
         print_status("Build completed successfully", "success")
-
-    def _run_keil_converter(self):
-        """Run the Keil converter script to generate Keil project files."""
-        print_header("Generating Keil Project Files")
-        keil_converter_path = self.project_dir / "keil-convertor" / "to-keil.py"
-
-        if not keil_converter_path.exists():
-            print_status(f"Keil converter script not found at {keil_converter_path}", "warning")
-            return
-
-        try:
-            # Run the keil converter script
-            cmd = [sys.executable, keil_converter_path.as_posix()]
-            self._run_command(cmd, cwd=keil_converter_path.parent)
-            print_status("Keil project files generated successfully", "success")
-        except subprocess.CalledProcessError:
-            print_status("Failed to generate Keil project files", "error")
-        except Exception as e:
-            print_status(f"Error running Keil converter: {str(e)}", "error")
 
     def flash(self, interface: Optional[str] = None):
         if not self.elf_file.exists():
@@ -319,12 +289,8 @@ def main():
 
     # Build command
     build_parser = subparsers.add_parser("build", help="Build the project")
-    build_parser.add_argument(
-        "--debug", action="store_true", help="Build in Debug mode"
-    )
-    build_parser.add_argument(
-        "--release", action="store_true", help="Build in Release mode"
-    )
+    build_parser.add_argument("--debug", action="store_true", help="Build in Debug mode")
+    build_parser.add_argument("--release", action="store_true", help="Build in Release mode")
     build_parser.add_argument("--build-dir", default="build", help="Build directory")
 
     # Build-release command
@@ -337,9 +303,7 @@ def main():
 
     # Flash command
     flash_parser = subparsers.add_parser("flash", help="Flash the device")
-    flash_parser.add_argument(
-        "--interface", choices=OPENOCD_INTERFACES, help="Programmer interface"
-    )
+    flash_parser.add_argument("--interface", choices=OPENOCD_INTERFACES, help="Programmer interface")
     flash_parser.add_argument("--build-dir", default="build", help="Build directory")
 
     # Debug command
@@ -352,12 +316,8 @@ def main():
 
     # Rebuild command
     rebuild_parser = subparsers.add_parser("rebuild", help="Clean and rebuild")
-    rebuild_parser.add_argument(
-        "--debug", action="store_true", help="Rebuild in Debug mode"
-    )
-    rebuild_parser.add_argument(
-        "--release", action="store_true", help="Rebuild in Release mode"
-    )
+    rebuild_parser.add_argument("--debug", action="store_true", help="Rebuild in Debug mode")
+    rebuild_parser.add_argument("--release", action="store_true", help="Rebuild in Release mode")
     rebuild_parser.add_argument("--build-dir", default="build", help="Build directory")
 
     args = parser.parse_args()

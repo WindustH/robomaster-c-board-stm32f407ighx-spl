@@ -61,6 +61,7 @@ typedef struct {
   const volatile motStat *(*status)();
   void (*send_ctrl_signal)();
   void (*update_status)(canRxH *rx_header, u8 *data);
+  void (*reset_postition)();
 } _MotorMod;
 
 extern const _MotorMod _motor;

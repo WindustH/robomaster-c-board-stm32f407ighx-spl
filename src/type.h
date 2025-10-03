@@ -76,6 +76,11 @@ typedef struct {
   f32 i;
   f32 d;
 
+  f32 r;
+  f32 kpr;
+  f32 kir;
+  f32 kdr;
+
   f32 prev_error; // Previous error for derivative
 
   u8 enabled; // Controller enabled flag
@@ -92,6 +97,10 @@ typedef struct {
   f32 pidv_kp;
   f32 pidv_ki;
   f32 pidv_kd;
+  f32 pidv_kpr;
+  f32 pidv_kir;
+  f32 pidv_kdr;
+  f32 pidv_r;
   f32 pidv_ol;
   u8 pidv_enabled;
 
@@ -99,6 +108,10 @@ typedef struct {
   f32 pidx_kp;
   f32 pidx_ki;
   f32 pidx_kd;
+  f32 pidx_kpr;
+  f32 pidx_kir;
+  f32 pidx_kdr;
+  f32 pidx_r;
   f32 pidx_ol;
   u8 pidx_enabled;
 } monWrite;

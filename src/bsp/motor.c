@@ -128,10 +128,12 @@ static void update_motor_feedback(canRxH *rx_header, u8 *data) {
   // bsp.led.show(0x00FFFFFF);
 }
 
+static void reset_motor_position() { motor_status[MOTOR_ID].th = 0.0f; }
 // Export the motor module
 const _MotorMod _motor = {.setup = setup_motor,
                           .set_current =
                               set_motor_current, // Sets target current
                           .status = read_feedback,
                           .send_ctrl_signal = send_motor_ctrl_msg,
-                          .update_status = update_motor_feedback};
+                          .update_status = update_motor_feedback,
+                          .reset_postition = reset_motor_position};

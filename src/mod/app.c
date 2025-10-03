@@ -1,10 +1,5 @@
 #include "mod/app.h"
 
-static void _init_impl();
-_AppMod app = {
-    .init = _init_impl,
-};
-
 static void init_app_mod() {
   app.pidv = _pidv;
   app.pidx = _pidx;
@@ -12,4 +7,6 @@ static void init_app_mod() {
   app.tick = _tick;
 }
 
-static void _init_impl() { init_app_mod(); }
+_AppMod app = {
+    .init = init_app_mod,
+};
