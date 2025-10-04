@@ -65,18 +65,19 @@ void send_motor_ctrl_msg() {
   tx_header.TransmitGlobalTime = DISABLE;
 
   // Fill data for motors 1-4 (ID 0x200)
-  for (int i = 0; i < 4; i++) {
+  for (u8 i = 0; i < 4; i++) {
     tx_data_1_4[i * 2] = (motor_current_targets[i] >> 8) & 0xFF;
     tx_data_1_4[i * 2 + 1] = motor_current_targets[i] & 0xFF;
   }
 
   // Fill data for motors 5-8 (ID 0x1FF)
-  for (int i = 0; i < 4; i++) {
+  for (u8 i = 0; i < 4; i++) {
     tx_data_5_8[i * 2] = (motor_current_targets[i + 4] >> 8) & 0xFF;
     tx_data_5_8[i * 2 + 1] = motor_current_targets[i + 4] & 0xFF;
   }
 
   // Send frame for motors 1-4
+
   tx_header.StdId = MOTOR_CONTROL_ID_1_4;
   if (bsp.can.send(&tx_header, tx_data_1_4, &unused_mailbox) != 0) {
     return; // Failed to send

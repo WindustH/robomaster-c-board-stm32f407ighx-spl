@@ -43,6 +43,7 @@ static void update_pidx() {
   if (!pidx_stat[MOTOR_ID].enabled)
     return;
   f32 velocity = pid_compute(app.pidx.status(), bsp.motor.status()->th);
+
   app.pidv.set_target(velocity);
 }
 
@@ -64,7 +65,7 @@ static void set_pidx_kpr(f32 kp) { pidx_stat[MOTOR_ID].kpr = kp; }
 static void set_pidx_kir(f32 ki) { pidx_stat[MOTOR_ID].kir = ki; }
 
 static void set_pidx_kdr(f32 kd) { pidx_stat[MOTOR_ID].kdr = kd; }
-static void set_pidx_r(f32 r) { pidx_stat[MOTOR_ID].r = r * 2 * PI / 360; }
+static void set_pidx_r(f32 r) { pidx_stat[MOTOR_ID].r = r; }
 
 static void set_pidx_output_limit(f32 output_limit) {
   pidx_stat[MOTOR_ID].output_limit = output_limit;

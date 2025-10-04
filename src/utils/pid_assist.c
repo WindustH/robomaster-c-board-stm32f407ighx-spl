@@ -12,6 +12,17 @@ f32 pid_compute(volatile pidStat *const pid, const f32 feedback) {
     kp = pid->kpr;
     ki = pid->kir;
     kd = pid->kdr;
+  } else if (pid->p < 4 * pid->r && pid->p > -4 * pid->r) {
+    f32 k;
+    if (pid->p > 0)
+      k = (pid->p - pid->r);
+    else
+      k = -(pid->p + pid->r);
+    k /= 3 * pid->r;
+    f32 c = 20 * k * k * k * k - 15 * k * k * k * k * k;
+    kp = pid->kpr * (1 - c) + pid->kp * c;
+    ki = pid->kir * (1 - c) + pid->ki * c;
+    kd = pid->kdr * (1 - c) + pid->kd * c;
   } else {
     kp = pid->kp;
     ki = pid->ki;
